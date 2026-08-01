@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Study Journey JAPAN</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F8F7F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Study Journey">
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <div>
+      <div class="brand">STUDY JOURNEY JAPAN</div>
+      <div class="page-title" id="pageTitle">Home</div>
+    </div>
+    <div class="header-actions">
+      <button class="calendar-btn" id="calendarBtn" aria-label="学習カレンダー" title="学習カレンダー">
+        <svg class="calendar-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M13 12h38a5 5 0 0 1 5 5v37H8V17a5 5 0 0 1 5-5Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M8 25h48M22 7v12M42 7v12" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="profile-btn" id="profileBtn" aria-label="プロフィール">--</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="screen active" data-screen="home">
+      <div class="cheer-inbox" id="cheerInbox" hidden></div>
+      <div class="streak-banner" id="streakBanner">10分で連続学習1日目</div>
+      <div class="hero-card">
+        <div class="current-chip" id="currentChip">現在地：沖縄県</div>
+        <div class="timer-large" id="homeTimer">00:00:00</div>
+        <button class="primary-btn" id="homeStart">START</button>
+        <div class="mission-launch-grid">
+          <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>（商業簿記）</small></button>
+          <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>（工業簿記）</small></button>
+        </div>
+        <div class="hero-grid">
+          <div><span>Today</span><strong id="todayMinutes">0 min</strong></div>
+          <div class="week-stat">
+            <span>This Week</span>
+            <strong id="weekMinutes">0 min</strong>
+            <small class="weekly-rank" id="weeklyRank">今週の勉強時間ランク --位</small>
+          </div>
+          <div><span>Next Badge</span><strong id="nextBadgeText">あと10分</strong></div>
+          <div class="points-stat">
+            <span>Total Points</span>
+            <strong id="totalPoints">0 pt</strong>
+            <small class="point-rank" id="pointRank">ポイントランク --位</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <h2>Journey Progress</h2>
+        <span id="homeProgressText">0 / 470 Memories</span>
+      </div>
+      <div class="progress-track"><div id="homeProgressFill"></div></div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-kicker">NEXT DESTINATION</div>
+          <h3 id="nextDestination">首里城</h3>
+          <p>10分学ぶごとに、旅の思い出が1つ増えます。</p>
+          <button class="ghost-btn" data-nav="collection">Collectionを見る</button>
+        </div>
+        <div class="panel home-map-panel">
+          <div class="panel-kicker">CURRENT LOCATION</div>
+          <div class="home-map-heading">
+            <h3 id="homeMapCurrentPref">沖縄県</h3>
+            <span id="homeMapPrefProgress">0 / 10</span>
+          </div>
+          <div class="journey-map-viewport compact current-image-map" id="homeMapViewport">
+            <img class="current-map-image" id="homeCurrentMapImage"
+                 src="Assets/maps/current/okinawa.png"
+                 alt="沖縄県周辺の地図">
+            <div class="current-location-pin" id="homeCurrentLocationPin"
+                 role="img" aria-label="現在地"></div>
+          </div>
+          <p class="home-map-caption" id="homeMapCaption">現在地周辺を拡大表示しています。</p>
+          <button class="ghost-btn" data-nav="map">Mapを見る</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="timer">
+      <div class="timer-screen-card">
+        <div class="timer-label">FOCUS TIMER</div>
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="timer-controls timer-controls-single">
+          <button class="primary-btn wide" id="timerStart">START</button>
+        </div>
+        <div class="timer-points-grid">
+          <div><span>本日の勉強時間ポイント</span><strong id="sessionPoints">0 pt</strong></div>
+          <div><span>累計獲得ポイント</span><strong id="timerTotalPoints">0 pt</strong></div>
+        </div>
+        <div class="timer-note">1分 = 1ポイント / 10分 = 1バッジ</div><div class="sync-state" id="pendingSync">同期済み</div>
+      </div>
+      <div class="mission-launch-grid timer-mission-launch">
+        <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>（商業簿記）</small></button>
+        <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>（工業簿記）</small></button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="mission">
+      <div class="mission-topbar">
+        <button class="ghost-btn mission-back" type="button">← 戻る</button>
+        <div class="mission-subject-switch">
+          <button data-mission-switch="commercial">COM.</button><button data-mission-switch="industrial">IND.</button>
+        </div>
+      </div>
+      <div class="mission-hero">
+        <div class="panel-kicker" id="missionKicker">COMMERCIAL BOOKKEEPING</div>
+        <h2 id="missionTitle">COM. MISSION</h2>
+        <p id="missionJapanese">商業簿記</p>
+        <div class="mission-progress-row"><strong id="missionProgressText">0 / 0</strong><span id="missionPercent">0%</span></div>
+        <div class="mission-progress-track"><div id="missionProgressFill"></div></div>
+        <div class="mission-summary-grid">
+          <div><span>解答記録</span><strong id="missionSolvedCount">0回</strong></div>
+          <div><span>問題演習ポイント</span><strong id="missionPointCount">0 pt</strong></div>
+          <div><span>未挑戦</span><strong id="missionRemainingCount">0問</strong></div>
+        </div>
+      </div>
+      <div class="mission-filters">
+        <button class="active" data-mission-filter="all">すべて</button>
+        <button data-mission-filter="unstarted">未挑戦</button>
+        <button data-mission-filter="review">△だけ</button>
+        <button data-mission-filter="master">MASTER</button>
+      </div>
+      <div id="missionChapters" class="mission-chapters"></div>
+    </section>
+
+    <section class="screen" data-screen="collection">
+      <div class="section-head collection-head">
+        <div>
+          <div class="panel-kicker">JOURNEY COLLECTION</div>
+          <h2>学びの思い出</h2>
+        </div>
+        <div class="progress-pill" id="collectionProgress">0 / 80</div>
+      </div>
+
+      <div class="pref-tabs" id="prefTabs"></div>
+      <div class="pref-title-row">
+        <div>
+          <div class="reading" id="prefReading"></div>
+          <h3 id="prefTitle"></h3>
+        </div>
+        <div class="count" id="prefCount">0 / 10</div>
+      </div>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </section>
+
+    <section class="screen" data-screen="map">
+      <div class="section-head">
+        <div>
+          <div class="panel-kicker">JOURNEY MAP</div>
+          <h2>日本一周の旅</h2>
+        </div>
+        <span id="mapProgress">0 / 470 Memories</span>
+      </div>
+
+      <div class="map-layout">
+        <div class="map-card">
+          <div class="map-view-toolbar">
+            <div>
+              <div class="panel-kicker">MAP VIEW</div>
+              <strong id="mapViewTitle">現在地周辺</strong>
+            </div>
+            <button type="button" class="map-view-toggle" id="mapViewToggle">🗾 日本全体を見る</button>
+          </div>
+          <div class="journey-map-viewport large current-image-map" id="mapViewport">
+            <img class="current-map-image" id="mainMapImage"
+                 src="Assets/maps/current/okinawa.png"
+                 alt="沖縄県周辺の地図">
+            <div class="current-location-pin" id="mainCurrentLocationPin"
+                 role="img" aria-label="現在地"></div>
+          </div>
+          <div class="map-caption" id="mapCaption">現在地周辺を拡大表示しています。</div>
+        </div>
+
+        <aside class="map-status-panel">
+          <div class="panel-kicker">CURRENT JOURNEY</div>
+          <h3 id="mapCurrentPref">沖縄県</h3>
+          <p id="mapCurrentText">沖縄県の10個の思い出を集めましょう。</p>
+          <div class="map-current-progress">
+            <span id="mapCurrentProgressLabel">沖縄県の進捗</span>
+            <strong id="mapCurrentProgress">0 / 10</strong>
+          </div>
+          <div class="map-pref-progress-track"><div id="mapPrefProgressFill"></div></div>
+          <p class="map-next-text" id="mapNextText">あと10個で鹿児島県へ</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="friends">
+      <div class="section-head">
+        <div>
+          <div class="panel-kicker">JOURNEY FRIENDS</div>
+          <h2>一緒に旅する仲間</h2>
+        </div>
+        <span>今週</span>
+      </div>
+      <div class="my-rank-card">
+        <div class="avatar big">JI</div>
+        <div>
+          <div class="rank-label">あなたの今週の旅</div>
+          <h3 id="myJourneyText">沖縄県・0 Memories</h3>
+        </div>
+        <div class="rank-score"><span class="weekly-time-label">今週の簿記勉強時間</span><strong id="myJourneyMinutes">0分</strong><small id="myJourneyPoints" class="my-journey-points">0 pt</small></div>
+      </div>
+      <div class="ranking-toolbar"><span id="rankingStatus">ランキングを読み込みます</span><button id="refreshRanking" class="ghost-btn">更新</button></div>
+      <div class="friends-list" id="friendsList"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="active" data-target="home"><span>⌂</span>Home</button>
+    <button data-target="timer"><span>◷</span>Timer</button>
+    <button data-target="collection"><span>◉</span>Collection</button>
+    <button data-target="map"><span>⌖</span>Map</button>
+    <button data-target="friends"><span>◎</span>Friends</button>
+  </nav>
+</div>
+
+<dialog id="badgeDialog">
+  <button class="dialog-close" aria-label="閉じる">×</button>
+  <img id="dialogImage" alt="">
+  <div class="dialog-pref" id="dialogPref"></div>
+  <h3 id="dialogName"></h3>
+  <div class="memory-label">MEMORY ACQUIRED</div>
+</dialog>
+
+
+
+<dialog id="calendarDialog" class="calendar-dialog">
+  <button class="dialog-close calendar-close" aria-label="閉じる">×</button>
+  <div class="calendar-topline">
+    <button id="calendarPrev" class="calendar-arrow" aria-label="前の月">‹</button>
+    <div>
+      <div class="panel-kicker">DAILY STUDY CALENDAR</div>
+      <h2 id="calendarTitle">学習カレンダー</h2>
+    </div>
+    <button id="calendarNext" class="calendar-arrow" aria-label="次の月">›</button>
+  </div>
+  <div class="calendar-streak" id="calendarStreak">10分で連続学習1日目</div>
+  <div class="calendar-weekdays"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+  <div class="calendar-today-goal" id="calendarTodayGoal"></div>
+  <div class="calendar-summary" id="calendarSummary"></div>
+  <div class="calendar-complete" id="calendarComplete" hidden></div>
+  <div class="calendar-rule">
+    <span><img src="Assets/medals/bronze.png" alt="銅メダル">10分・+10pt</span>
+    <span><img src="Assets/medals/silver.png" alt="銀メダル">60分・+30pt</span>
+    <span><img src="Assets/medals/gold.png" alt="金メダル">120分・+50pt</span>
+  </div>
+</dialog>
+
+<dialog id="registerDialog" class="register-dialog">
+  <div class="register-mark">SJ</div>
+  <div class="panel-kicker">WELCOME TO THE JOURNEY</div>
+  <h2 id="registerTitle">参加者登録</h2>
+  <p id="registerIntro">初めての方はプロフィールを登録してください。IDは自動で発行されます。</p>
+  <p class="register-tip">💡 あとでIDを確認したくなったら、プロフィールアイコンを押してください。いつでも確認できます。</p>
+  <div class="login-existing" id="loginExisting">
+    <div class="login-divider"><span>すでにIDをお持ちの方</span></div>
+    <label>Study Journey ID<input id="loginIdInput" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="例：SJ-7K3P9A"></label>
+    <button class="ghost-btn login-submit" id="loginSubmit" type="button">このIDで続きから始める</button>
+    <div class="form-message" id="loginMessage"></div>
+  </div>
+  <div class="login-divider"><span>初めての方</span></div>
+  <form id="registerForm">
+    <div class="avatar-upload-row">
+      <div class="avatar avatar-preview" id="avatarPreview">SJ</div>
+      <div class="avatar-upload-actions"><label class="avatar-upload-button">好きなアイコンを選ぶ<input id="avatarInput" type="file" accept="image/*"></label><button class="avatar-clear-button" id="avatarClearButton" type="button">選択を解除</button></div>
+    </div>
+    <div class="avatar-help">写真やイラストを正方形に整えて登録します（8MB以下）。画像なしでも登録できます。</div>
+    <label>ニックネーム<span>必須</span><input id="nicknameInput" maxlength="30" required placeholder="例：さくら"></label>
+    <label>学部<input id="facultyInput" maxlength="50" placeholder="例：経済学部"></label>
+    <label>学科<input id="departmentInput" maxlength="50" placeholder="例：経済学科"></label>
+    <label>メールアドレス<input id="teacherEmailInput" maxlength="100" type="email" placeholder="例：student@example.jp"></label>
+    <div class="current-id" id="currentIdBox" hidden>あなたのID：<strong id="currentUserId"></strong></div>
+    <div class="form-message" id="registerMessage"></div>
+    <button class="primary-btn register-submit" id="registerSubmit" type="submit">旅をはじめる</button>
+    <button class="ghost-btn profile-keep-button" id="profileKeepButton" type="button" hidden>プロフィールはそのまま</button>
+  </form>
+  <section class="manual-update-section" aria-labelledby="manualUpdateHeading">
+    <div class="panel-kicker" id="manualUpdateHeading">APP VERSION</div>
+    <div class="current-version">Version <strong id="currentAppVersion">2.1.0 β1</strong></div>
+    <button class="primary-btn manual-update-button" id="manualUpdateButton" type="button">🚀 最新バージョンで旅をする</button>
+    <p class="manual-update-help">最新バージョンがあるかもしれません。<br>こちらを押してみてください。</p>
+    <div class="manual-update-result" id="manualUpdateResult" role="status" aria-live="polite"></div>
+  </section>
+</dialog>
+
+
+<dialog id="idDialog" class="id-dialog">
+  <div class="register-mark">SJ</div>
+  <div class="panel-kicker">YOUR JOURNEY ID</div>
+  <h2>登録が完了しました！</h2>
+  <p>スマホ・パソコン・タブレットで、同じ続きから始められます。</p>
+  <div class="issued-id" id="issuedId">SJ-XXXXXX</div>
+  <button class="primary-btn" id="copyIdButton" type="button">IDをコピー</button>
+  <button class="ghost-btn" id="closeIdButton" type="button">旅をはじめる</button>
+  <small>このIDをメモまたはスクリーンショットで保存してください。パスワードはありません。</small>
+</dialog>
+
+<dialog id="updateDialog" class="update-dialog" aria-labelledby="updateTitle">
+  <div class="update-symbol" aria-hidden="true">↻</div>
+  <div class="panel-kicker">APP UPDATE</div>
+  <h2 id="updateTitle">新しいバージョンがあります</h2>
+  <p>最新版に更新しますか？<br>学習時間やプロフィールの記録はそのまま引き継がれます。</p>
+  <div class="update-actions">
+    <button type="button" class="ghost-btn update-later" id="updateLater">あとで</button>
+    <button type="button" class="primary-btn update-now" id="updateNow">今すぐ更新</button>
+  </div>
+  <div class="form-message" id="updateMessage" role="status"></div>
+</dialog>
+
+<div class="sync-toast" id="syncToast" role="status"></div>
+
+<script src="mission-data.js"></script>
+<script src="app.js"></script>
+<script src="mission.js"></script>
+<script>
+(() => {
+  const APP_VERSION = "2.1.0 β1";
+  document.getElementById("currentAppVersion").textContent = APP_VERSION;
+
+  if (!("serviceWorker" in navigator)) {
+    const button = document.getElementById("manualUpdateButton");
+    const result = document.getElementById("manualUpdateResult");
+    button.addEventListener("click", () => {
+      result.innerHTML = `<strong>この端末では更新確認機能を利用できません。</strong><span>ブラウザでページを再読み込みしてください。</span>`;
+    });
+    return;
+  }
+
+  let refreshing = false;
+  let waitingWorker = null;
+  let registrationRef = null;
+  let manualCheckInProgress = false;
+  let manualUpdateFound = false;
+  const dialog = document.getElementById("updateDialog");
+  const updateNow = document.getElementById("updateNow");
+  const updateLater = document.getElementById("updateLater");
+  const updateMessage = document.getElementById("updateMessage");
+  const manualButton = document.getElementById("manualUpdateButton");
+  const manualResult = document.getElementById("manualUpdateResult");
+
+  const setManualResult = (title, text, state = "success") => {
+    manualResult.className = `manual-update-result ${state}`;
+    manualResult.innerHTML = `<strong>${title}</strong><span>${text}</span>`;
+  };
+
+  const activateUpdate = worker => {
+    if (!worker) return;
+    waitingWorker = worker;
+    localStorage.setItem("sj-update-success", APP_VERSION);
+    worker.postMessage({ type: "SKIP_WAITING" });
+  };
+
+  const showUpdate = worker => {
+    if (!worker || !navigator.serviceWorker.controller) return;
+    waitingWorker = worker;
+    if (manualCheckInProgress) {
+      manualUpdateFound = true;
+      manualButton.disabled = true;
+      manualButton.textContent = "更新しています…";
+      setManualResult("最新版を準備しています…", "まもなく自動で再読み込みします。", "checking");
+      activateUpdate(worker);
+      return;
+    }
+    updateNow.disabled = false;
+    updateNow.textContent = "今すぐ更新";
+    updateMessage.textContent = "";
+    if (!dialog.open) dialog.showModal();
+  };
+
+  const watchInstalling = registration => {
+    const worker = registration.installing;
+    if (!worker) return;
+    worker.addEventListener("statechange", () => {
+      if (worker.state === "installed" && navigator.serviceWorker.controller) {
+        showUpdate(registration.waiting || worker);
+      }
+    });
+  };
+
+  const manualCheck = async () => {
+    manualCheckInProgress = true;
+    manualUpdateFound = false;
+    manualButton.disabled = true;
+    manualButton.textContent = "最新版を確認中…";
+    setManualResult("最新版を確認しています…", "少しだけお待ちください。", "checking");
+    try {
+      const registration = registrationRef || await navigator.serviceWorker.ready;
+      registrationRef = registration;
+      if (registration.waiting) {
+        showUpdate(registration.waiting);
+        return;
+      }
+      await registration.update();
+      await new Promise(resolve => setTimeout(resolve, 2200));
+      if (!manualUpdateFound && !registration.waiting) {
+        setManualResult("✅ 現在、最新版です！", `Ver.${APP_VERSION}で旅をしています。`);
+        manualButton.disabled = false;
+        manualButton.textContent = "🚀 最新バージョンで旅をする";
+        manualCheckInProgress = false;
+      } else if (registration.waiting) {
+        showUpdate(registration.waiting);
+      }
+    } catch (error) {
+      setManualResult("更新を確認できませんでした。", "通信環境を確認して、もう一度お試しください。", "error");
+      manualButton.disabled = false;
+      manualButton.textContent = "🚀 最新バージョンで旅をする";
+      manualCheckInProgress = false;
+    }
+  };
+
+  manualButton.addEventListener("click", manualCheck);
+
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" });
+      registrationRef = registration;
+      if (registration.waiting) showUpdate(registration.waiting);
+      registration.addEventListener("updatefound", () => watchInstalling(registration));
+      await registration.update();
+      setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) registration.update().catch(() => {});
+      });
+
+      const updatedVersion = localStorage.getItem("sj-update-success");
+      if (updatedVersion) {
+        localStorage.removeItem("sj-update-success");
+        setTimeout(() => {
+          if (!document.getElementById("registerDialog").open) openProfile();
+          setManualResult("✅ 最新版に更新しました！", `Ver.${APP_VERSION}になりました。新しい機能をお楽しみください。`);
+        }, 450);
+      }
+    } catch (error) {
+      console.warn("Service Worker registration failed:", error);
+    }
+  });
+
+  updateNow.addEventListener("click", () => {
+    if (!waitingWorker) return;
+    updateNow.disabled = true;
+    updateNow.textContent = "更新しています…";
+    updateMessage.textContent = "最新版を準備しています。";
+    localStorage.setItem("sj-update-success", APP_VERSION);
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+  });
+
+  updateLater.addEventListener("click", () => dialog.close());
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+})();
+</script>
+</body>
+</html>
