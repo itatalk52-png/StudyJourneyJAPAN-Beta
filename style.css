@@ -1735,3 +1735,61 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
   text-align:right !important;
   overflow:visible !important;
 }
+
+/* ============================================================
+   Ver.2.1.0 β18 Complete — direct self-card layout
+   ============================================================ */
+.friend-self-time-label-beta18{
+  display:block !important;
+  width:100% !important;
+  margin:0 0 5px !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+}
+
+.friend-self-time-block-beta18{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  text-align:right !important;
+  line-height:1.05 !important;
+  font-variant-numeric:tabular-nums !important;
+}
+
+.friend-self-time-hours,
+.friend-self-time-minutes,
+.friend-self-time-points{
+  display:block !important;
+  width:100% !important;
+  text-align:right !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:normal !important;
+  font-size:18px !important;
+  line-height:1.08 !important;
+  font-weight:900 !important;
+  letter-spacing:-0.02em !important;
+}
+
+.friend-self-time-points{
+  margin-top:7px !important;
+  color:#c34a3b !important;
+}
+
+/* Self-card right column */
+.friend-self-card > :last-child,
+.friends-self-card > :last-child,
+.friends-hero-card > :last-child,
+[data-friend-self] > :last-child{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
+  min-width:112px !important;
+  text-align:right !important;
+  overflow:visible !important;
+}

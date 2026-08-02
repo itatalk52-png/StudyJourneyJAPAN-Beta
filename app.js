@@ -277,7 +277,7 @@ function renderRanking(rows){const list=document.getElementById('friendsList');l
     pointRankEl.textContent=`ポイントランク ${Number(row.pointRank)||'-'}位`;
     pointRankEl.dataset.loaded='true';
   }
-}const div=document.createElement('div');div.className='friend-row'+(mine?' mine':'');const totalPoints=Number(row.totalPoints)||0;const action=mine?'':`<button type="button" class="cheer-btn ${row.dormant?'dormant':''}" ${row.cheeredToday?'disabled':''}>${row.cheeredToday?'送信済み':`エールを送る🎉 +${row.cheerValue}pt`}</button>`;div.innerHTML=`<span class="rank-no">${Number(row.rank)||'-'}</span>${avatarMarkup(row.avatarUrl,row.nickname)}<div><strong>${escapeHtml(row.nickname)}${mine?'（あなた）':''}</strong><small>${escapeHtml(row.currentPrefecture||'沖縄県')} ${row.faculty?'・'+escapeHtml(row.faculty):''}</small><div class="points-breakdown">学習 ${Number(row.totalMinutes)||0}pt・問題 ${Number(row.missionPoints)||0}pt・メダル ${Number(row.medalPoints)||0}pt・連続 ${Number(row.streakPoints)||0}pt・エール ${formatPoints(row.cheerPoints)}pt</div></div><span class="friend-score"><span class="weekly-time-label">今週の簿記勉強時間</span><strong>${formatStudyDuration(row.weeklyMinutes)}</strong><small>${formatPoints(totalPoints)} pt</small></span>${action}`;const btn=div.querySelector('.cheer-btn');if(btn&&!btn.disabled)btn.onclick=()=>sendCheer(row.userId,row.nickname,btn);list.appendChild(div);});}
+}const div=document.createElement('div');div.className='friend-row'+(mine?' mine':'');const totalPoints=Number(row.totalPoints)||0;const action=mine?'':`<button type="button" class="cheer-btn ${row.dormant?'dormant':''}" ${row.cheeredToday?'disabled':''}>${row.cheeredToday?'送信済み':`エールを送る🎉 +${row.cheerValue}pt`}</button>`;div.innerHTML=`<span class="rank-no">${Number(row.rank)||'-'}</span>${avatarMarkup(row.avatarUrl,row.nickname)}<div><strong>${escapeHtml(row.nickname)}${mine?'（あなた）':''}</strong><small>${escapeHtml(row.currentPrefecture||'沖縄県')} ${row.faculty?'・'+escapeHtml(row.faculty):''}</small><div class="points-breakdown">学習 ${Number(row.totalMinutes)||0}pt・問題 ${Number(row.missionPoints)||0}pt・メダル ${Number(row.medalPoints)||0}pt・連続 ${Number(row.streakPoints)||0}pt・エール ${formatPoints(row.cheerPoints)}pt</div></div><span class="friend-score"><span class="weekly-time-label">今週の簿記勉強時間</span><strong><span class="friend-self-time-hours">${String(Math.min(99,Math.floor((Number(ownWeeklyMinutes)||0)/60))).padStart(2,'0')}時間</span><span class="friend-self-time-minutes">${String(Math.min(59,(Number(ownWeeklyMinutes)||0)%60)).padStart(2,'0')}分</span></strong><small>${formatPoints(totalPoints)} pt</small></span>${action}`;const btn=div.querySelector('.cheer-btn');if(btn&&!btn.disabled)btn.onclick=()=>sendCheer(row.userId,row.nickname,btn);list.appendChild(div);});}
 function medalLabel(medal){return medal==='gold'?'金メダル':medal==='silver'?'銀メダル':medal==='bronze'?'銅メダル':'メダル';}
 function medalImage(medal){return medal?`Assets/medals/${medal}.png`:'';}
 function renderStreakBanner(todayMinutes){const el=document.getElementById('streakBanner'),streak=Number(state.currentStreak)||0;if(todayMinutes>=10)el.textContent=`連続学習 ${Math.max(1,streak)}日目🎉`;else if(streak>0)el.textContent=`あと${Math.max(0,10-todayMinutes)}分で連続学習 ${streak+1}日目`;else el.textContent=`あと${Math.max(0,10-todayMinutes)}分で連続学習1日目`;}
@@ -307,61 +307,68 @@ updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProf
 
 
 
-/* Ver.2.1.0 β17: fixed two-line self-card weekly time */
-function normalizeOwnWeeklyTimeDisplay(){
+
+
+/* Ver.2.1.0 β18: direct Friends self-card renderer */
+function renderFriendsSelfCardBeta18(){
   const selfCard =
     document.querySelector('.friend-self-card') ||
     document.querySelector('.friends-self-card') ||
     document.querySelector('.friends-hero-card') ||
     document.querySelector('[data-friend-self]');
-
   if(!selfCard)return;
 
-  const nodes=[...selfCard.querySelectorAll('*')];
-  const label=nodes.find(node=>
+  const all=[...selfCard.querySelectorAll('*')];
+  const label=all.find(node=>
     node.children.length===0 &&
     /今週の簿記勉強時間/.test((node.textContent||'').trim())
   );
+  if(!label)return;
 
-  let timeNode=null;
+  const compactText=selfCard.textContent.replace(/\s+/g,'');
+  const timeMatch=compactText.match(/(\d{1,2})時間(\d{1,2})分/);
+  const pointMatch=compactText.match(/(\d+(?:\.\d+)?)p/);
 
-  if(label && label.parentElement){
-    timeNode=[...label.parentElement.querySelectorAll('*')].find(node=>{
-      const text=(node.textContent||'').replace(/\s+/g,'');
-      return node!==label && /\d{1,2}時間\d{1,2}分/.test(text);
-    });
+  let hours='00';
+  let minutes='00';
+  if(timeMatch){
+    hours=String(Math.min(99,Number(timeMatch[1]))).padStart(2,'0');
+    minutes=String(Math.min(59,Number(timeMatch[2]))).padStart(2,'0');
   }
 
-  if(!timeNode){
-    timeNode=nodes.find(node=>{
-      const text=(node.textContent||'').replace(/\s+/g,'');
-      return /\d{1,2}時間\d{1,2}分/.test(text);
-    });
+  const container=label.parentElement;
+  if(!container)return;
+
+  let valueBlock=container.querySelector('.friend-self-time-block-beta18');
+  if(!valueBlock){
+    valueBlock=document.createElement('div');
+    valueBlock.className='friend-self-time-block-beta18';
+    container.appendChild(valueBlock);
   }
 
-  if(!timeNode)return;
+  valueBlock.innerHTML=
+    `<span class="friend-self-time-hours">${hours}時間</span>`+
+    `<span class="friend-self-time-minutes">${minutes}分</span>`+
+    (pointMatch?`<span class="friend-self-time-points">${pointMatch[1]}p</span>`:'');
 
-  const compact=(timeNode.textContent||'').replace(/\s+/g,'');
-  const match=compact.match(/(\d{1,2})時間(\d{1,2})分/);
-  if(!match)return;
+  [...container.children].forEach(child=>{
+    if(child===label||child===valueBlock)return;
+    const text=(child.textContent||'').replace(/\s+/g,'');
+    if(/\d{1,2}時間\d{1,2}分/.test(text)||/^\d+(?:\.\d+)?p$/.test(text)){
+      child.style.display='none';
+    }
+  });
 
-  const hours=String(Math.min(99,Number(match[1]))).padStart(2,'0');
-  const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
-
-  timeNode.classList.add('friend-own-weekly-time-beta17');
-  timeNode.innerHTML=
-    `<span class="friend-time-line">${hours}時間</span>`+
-    `<span class="friend-time-line">${minutes}分</span>`;
-  timeNode.setAttribute('aria-label',`${hours}時間${minutes}分`);
+  label.classList.add('friend-self-time-label-beta18');
 }
 
-const beta17Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+function scheduleFriendsSelfCardBeta18(){
+  requestAnimationFrame(()=>renderFriendsSelfCardBeta18());
+  setTimeout(()=>renderFriendsSelfCardBeta18(),50);
+}
 
 window.addEventListener('DOMContentLoaded',()=>{
-  normalizeOwnWeeklyTimeDisplay();
-  beta17Observer.observe(document.body,{
-    subtree:true,
-    childList:true,
-    characterData:true
-  });
+  scheduleFriendsSelfCardBeta18();
+  const observer=new MutationObserver(()=>scheduleFriendsSelfCardBeta18());
+  observer.observe(document.body,{subtree:true,childList:true,characterData:true});
 });
