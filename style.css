@@ -1571,3 +1571,63 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
   word-break:normal !important;
   overflow-wrap:normal !important;
 }
+
+/* ============================================================
+   Ver.2.1.0 β15 Complete — compact Friends weekly time
+   ============================================================ */
+.friend-own-weekly-time-compact{
+  display:inline-flex !important;
+  flex-wrap:nowrap !important;
+  align-items:baseline !important;
+  justify-content:flex-start !important;
+  width:max-content !important;
+  min-width:max-content !important;
+  max-width:none !important;
+  white-space:nowrap !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  line-height:1 !important;
+  letter-spacing:0 !important;
+  gap:0 !important;
+}
+.friend-own-weekly-time-compact .friend-time-number{
+  display:inline-block;
+  flex:0 0 auto;
+  font-size:clamp(22px,5.4vw,29px);
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;
+}
+.friend-own-weekly-time-compact .friend-time-unit{
+  display:inline-block;
+  flex:0 0 auto;
+  margin:0 1px;
+  font-size:clamp(10px,2.55vw,13px);
+  line-height:1;
+  font-weight:800;
+  letter-spacing:-.04em;
+  transform:translateY(-1px);
+}
+.friend-self-card > :last-child,
+.friends-self-card > :last-child,
+.friends-hero-card > :last-child,
+[data-friend-self] > :last-child{
+  min-width:126px !important;
+  flex:0 0 auto !important;
+}
+@media(max-width:390px){
+  .friend-own-weekly-time-compact .friend-time-number{
+    font-size:21px;
+  }
+  .friend-own-weekly-time-compact .friend-time-unit{
+    font-size:9px;
+    margin:0;
+  }
+  .friend-self-card > :last-child,
+  .friends-self-card > :last-child,
+  .friends-hero-card > :last-child,
+  [data-friend-self] > :last-child{
+    min-width:116px !important;
+  }
+}

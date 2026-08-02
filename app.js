@@ -301,7 +301,26 @@ window.addEventListener('beforeunload',()=>{if(state.running)reconcileRunningTim
 updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProfile,400);else{loadCloudState(false).finally(()=>{loadRanking();loadCalendar(false);syncPendingMinutes();});}
 
 
-/* Ver.2.1.0 β14: keep the own Friends weekly time on one line */
+
+
+/* Ver.2.1.0 β15: large numerals + smaller 時間/分 units */
+function formatOwnWeeklyTimeWithSmallUnits(timeNode){
+  if(!timeNode)return;
+  const raw=(timeNode.textContent||'').replace(/\s+/g,'');
+  const match=raw.match(/(\d{1,2})時間(\d{1,2})分/);
+  if(!match)return;
+
+  const hours=String(Math.min(99,Number(match[1])));
+  const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
+
+  timeNode.classList.add('friend-own-weekly-time-compact');
+  timeNode.innerHTML=
+    `<span class="friend-time-number">${hours}</span>`+
+    `<span class="friend-time-unit">時間</span>`+
+    `<span class="friend-time-number">${minutes}</span>`+
+    `<span class="friend-time-unit">分</span>`;
+  timeNode.setAttribute('aria-label',`${hours}時間${minutes}分`);
+}
 function normalizeOwnWeeklyTimeDisplay(){
   const selfCard =
     document.querySelector('.friend-self-card') ||
@@ -311,43 +330,33 @@ function normalizeOwnWeeklyTimeDisplay(){
 
   if(!selfCard)return;
 
-  const labels=[...selfCard.querySelectorAll('*')];
-  const label=labels.find(node=>
+  const all=[...selfCard.querySelectorAll('*')];
+  const label=all.find(node=>
     node.children.length===0 &&
     /今週の簿記勉強時間/.test((node.textContent||'').trim())
   );
 
   let timeNode=null;
-  if(label){
-    const container=label.parentElement;
-    if(container){
-      timeNode=[...container.querySelectorAll('*')].find(node=>
-        node!==label &&
-        node.children.length===0 &&
-        /\d+\s*時間\s*\d+\s*分/.test((node.textContent||'').replace(/\s+/g,''))
-      );
-    }
-  }
-
-  if(!timeNode){
-    timeNode=[...selfCard.querySelectorAll('*')].find(node=>
-      node.children.length===0 &&
-      /\d+\s*時間\s*\d+\s*分/.test((node.textContent||'').replace(/\s+/g,''))
+  if(label&&label.parentElement){
+    timeNode=[...label.parentElement.querySelectorAll('*')].find(node=>
+      node!==label &&
+      /\d{1,2}\s*時間\s*\d{1,2}\s*分/.test((node.textContent||'').replace(/\s+/g,''))
     );
   }
 
-  if(timeNode){
-    const compact=(timeNode.textContent||'').replace(/\s+/g,'');
-    const match=compact.match(/(\d+)時間(\d+)分/);
-    if(match){
-      timeNode.textContent=`${match[1]}時間${match[2].padStart(2,'0')}分`;
-    }
-    timeNode.classList.add('friend-own-weekly-time-nowrap');
-    timeNode.setAttribute('aria-label',timeNode.textContent);
+  if(!timeNode){
+    timeNode=all.find(node=>
+      /\d{1,2}\s*時間\s*\d{1,2}\s*分/.test((node.textContent||'').replace(/\s+/g,'')) &&
+      !node.querySelector('.friend-time-number')
+    );
+  }
+
+  if(timeNode&&!timeNode.querySelector('.friend-time-number')){
+    formatOwnWeeklyTimeWithSmallUnits(timeNode);
   }
 }
-const beta14Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+const beta15Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
 window.addEventListener('DOMContentLoaded',()=>{
   normalizeOwnWeeklyTimeDisplay();
-  beta14Observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+  beta15Observer.observe(document.body,{subtree:true,childList:true,characterData:true});
 });
