@@ -2,13 +2,19 @@
 const MISSION_STORAGE_KEY='sjj_mission_cache_v2';
 const MISSION_FAVORITE_KEY='sjj_mission_favorites_v1';
 const MISSION_LEVELS=['none','triangle','circle','double'];
-const MISSION_LEVEL_MARK={none:'',triangle:'△',circle:'○',double:'◎'};
+const MISSION_LEVEL_DISPLAY={
+  none:'',
+  triangle:'△',
+  circle:'○',
+  double:'👍✨✨✨'
+};
 const MISSION_LEVEL_POINTS={none:0,triangle:5,circle:10,double:20};
 
 let missionSubject='commercial';
 let missionFilter='all';
 let missionRecords={};
 let missionFavorites={};
+let openLevelMenuKey='';
 
 function safeJson(text,fallback={}){
   try{return JSON.parse(text)||fallback}catch(e){return fallback}
@@ -16,6 +22,7 @@ function safeJson(text,fallback={}){
 function missionKey(subject,id,round){return `${subject}|${id}|${round}`;}
 function favoriteKey(subject,id){return `${subject}|${id}`;}
 function missionSubjectData(){return (window.MISSION_DATA&&MISSION_DATA[missionSubject])||[];}
+
 function missionLocalLoad(){
   missionRecords=safeJson(localStorage.getItem(MISSION_STORAGE_KEY),{});
   missionFavorites=safeJson(localStorage.getItem(MISSION_FAVORITE_KEY),{});
@@ -50,10 +57,6 @@ function recordFor(subject,id,round,create=true){
 function recordsFor(subject,id){
   return [1,2,3].map(round=>recordFor(subject,id,round));
 }
-function nextLevel(level){
-  const index=MISSION_LEVELS.indexOf(level);
-  return MISSION_LEVELS[(index+1)%MISSION_LEVELS.length];
-}
 function isFavorite(subject,id){return !!missionFavorites[favoriteKey(subject,id)];}
 function toggleFavorite(subject,id){
   const key=favoriteKey(subject,id);
@@ -65,8 +68,7 @@ function toggleFavorite(subject,id){
 function awardedTotal(){
   let total=0;
   Object.entries(missionRecords).forEach(([key,rec])=>{
-    if(key.startsWith('_'))return;
-    if(!rec||!rec.awarded)return;
+    if(key.startsWith('_')||!rec||!rec.awarded)return;
     if(rec.awarded.triangle)total+=5;
     if(rec.awarded.circle)total+=10;
     if(rec.awarded.double)total+=20;
@@ -102,30 +104,24 @@ function checkThreeRoundBonus(subject,id){
     addMissionPoints(100,'🔥 3回転コンプリート！ +100pt');
   }
 }
-function cycleUnderstanding(subject,id,round){
+function setUnderstanding(subject,id,round,newLevel){
   const rec=recordFor(subject,id,round);
-  const newLevel=nextLevel(rec.level);
-  rec.level=newLevel;
-  if(newLevel!=='none')rec.solved=true;
+  const normalized=MISSION_LEVELS.includes(newLevel)?newLevel:'none';
+  rec.level=normalized;
+  rec.solved=normalized!=='none';
   rec.updatedAt=new Date().toISOString();
-  const points=awardLevelMilestone(rec,newLevel);
-  if(points)addMissionPoints(points,`${MISSION_LEVEL_MARK[newLevel]} 理解度を記録しました！ +${points}pt`);
+
+  const points=awardLevelMilestone(rec,normalized);
+  if(points){
+    const label=MISSION_LEVEL_DISPLAY[normalized];
+    addMissionPoints(points,`${label} 理解度を記録しました！ +${points}pt`);
+  }
+
   missionLocalSave();
   checkThreeRoundBonus(subject,id);
   missionLocalSave();
+  openLevelMenuKey='';
   renderMission();
-}
-function toggleSolved(subject,id){
-  const records=recordsFor(subject,id);
-  let targetIndex=records.findIndex(rec=>!rec.solved);
-  if(targetIndex===-1)targetIndex=2;
-  const rec=records[targetIndex];
-  rec.solved=!rec.solved;
-  if(!rec.solved)rec.level='none';
-  rec.updatedAt=new Date().toISOString();
-  missionLocalSave();
-  renderMission();
-  if(typeof toast==='function')toast(rec.solved?'🔥 解答済みにしました':'未解答に戻しました');
 }
 function missionStats(){
   const list=missionSubjectData();
@@ -144,9 +140,38 @@ function problemMatchesFilter(problem){
   const records=recordsFor(missionSubject,problem.id);
   if(missionFilter==='unstarted')return !records.some(rec=>rec.solved);
   if(missionFilter==='review')return records.some(rec=>rec.level==='triangle');
-  if(missionFilter==='master')return records.every(rec=>rec.solved&&rec.level==='double');
+  if(missionFilter==='master')return records.every(rec=>rec.level==='double');
   if(missionFilter==='favorite')return isFavorite(missionSubject,problem.id);
   return true;
+}
+function problemStatus(records){
+  if(records.every(rec=>rec.level==='double'))return {type:'master',label:'🏆 MASTER'};
+  if(records.some(rec=>rec.solved))return {type:'challenge',label:'🔥 チャレンジ中'};
+  return {type:'none',label:''};
+}
+function createLevelMenu(problem,round,rec){
+  const menu=document.createElement('div');
+  const key=missionKey(missionSubject,problem.id,round);
+  menu.className=`mission-level-menu ${openLevelMenuKey===key?'open':''}`;
+  menu.setAttribute('aria-hidden',openLevelMenuKey===key?'false':'true');
+
+  [
+    ['triangle','△'],
+    ['circle','○'],
+    ['double','👍✨✨✨'],
+    ['none','未設定']
+  ].forEach(([level,label])=>{
+    const option=document.createElement('button');
+    option.type='button';
+    option.className=`mission-level-option ${rec.level===level?'selected':''}`;
+    option.textContent=label;
+    option.onclick=event=>{
+      event.stopPropagation();
+      setUnderstanding(missionSubject,problem.id,round,level);
+    };
+    menu.appendChild(option);
+  });
+  return menu;
 }
 function renderMission(){
   const commercial=missionSubject==='commercial';
@@ -197,20 +222,20 @@ function renderMission(){
 
     shown.forEach(problem=>{
       const records=recordsFor(missionSubject,problem.id);
-      const master=records.every(rec=>rec.solved&&rec.level==='double');
+      const status=problemStatus(records);
       const row=document.createElement('div');
       row.className='mission-problem';
       row.setAttribute('role','group');
 
-      const main=document.createElement('button');
-      main.type='button';
-      main.className='mission-problem-main';
-      main.setAttribute('aria-label',`${problem.id} ${problem.title} 解答済み切替`);
+      const head=document.createElement('div');
+      head.className='mission-problem-head';
+
+      const main=document.createElement('div');
+      main.className='mission-problem-main static';
       main.innerHTML=`
         <span class="mission-problem-id">${typeof escapeHtml==='function'?escapeHtml(problem.id):problem.id}</span>
-        <span class="mission-problem-title">${typeof escapeHtml==='function'?escapeHtml(problem.title):problem.title}${master?'<small class="mission-master"> MASTER</small>':''}</span>`;
-      main.onclick=()=>toggleSolved(missionSubject,problem.id);
-      row.appendChild(main);
+        <span class="mission-problem-title">${typeof escapeHtml==='function'?escapeHtml(problem.title):problem.title}</span>`;
+      head.appendChild(main);
 
       const favorite=document.createElement('button');
       favorite.type='button';
@@ -218,25 +243,45 @@ function renderMission(){
       favorite.textContent='★';
       favorite.title='お気に入り';
       favorite.onclick=event=>{event.stopPropagation();toggleFavorite(missionSubject,problem.id);};
-      row.appendChild(favorite);
+      head.appendChild(favorite);
+      row.appendChild(head);
+
+      if(status.label){
+        const statusLine=document.createElement('div');
+        statusLine.className=`mission-status mission-status-${status.type}`;
+        statusLine.textContent=status.label;
+        row.appendChild(statusLine);
+      }
 
       const rounds=document.createElement('div');
       rounds.className='mission-rounds';
 
       [1,2,3].forEach(round=>{
         const rec=records[round-1];
+        const wrap=document.createElement('div');
+        wrap.className='mission-round-wrap';
+
         const button=document.createElement('button');
         button.type='button';
-        button.className=`mission-round round-${round} ${rec.solved?'done':''} level-${rec.level}`;
-        button.setAttribute('aria-label',`${problem.id} ${round}回転目 理解度変更`);
-        button.innerHTML=`
-          <span class="round-label">${round}回転目</span>
-          <span class="round-state">${rec.solved?'🔥':''}${MISSION_LEVEL_MARK[rec.level]}</span>`;
+        button.className=`mission-round round-${round} ${rec.solved?'done':''}`;
+        button.textContent=`${round}回転目`;
+        button.setAttribute('aria-expanded',openLevelMenuKey===missionKey(missionSubject,problem.id,round)?'true':'false');
         button.onclick=event=>{
           event.stopPropagation();
-          cycleUnderstanding(missionSubject,problem.id,round);
+          const key=missionKey(missionSubject,problem.id,round);
+          openLevelMenuKey=openLevelMenuKey===key?'':key;
+          renderMission();
         };
-        rounds.appendChild(button);
+        wrap.appendChild(button);
+
+        const selected=document.createElement('div');
+        selected.className=`mission-selected-level level-${rec.level}`;
+        selected.textContent=MISSION_LEVEL_DISPLAY[rec.level];
+        selected.setAttribute('aria-label',rec.level==='none'?'理解度未設定':`理解度 ${MISSION_LEVEL_DISPLAY[rec.level]}`);
+        wrap.appendChild(selected);
+
+        wrap.appendChild(createLevelMenu(problem,round,rec));
+        rounds.appendChild(wrap);
       });
 
       row.appendChild(rounds);
@@ -249,6 +294,7 @@ function renderMission(){
 function openMission(subject){
   missionSubject=subject;
   missionFilter='all';
+  openLevelMenuKey='';
   document.querySelectorAll('[data-mission-filter]').forEach(button=>{
     button.classList.toggle('active',button.dataset.missionFilter==='all');
   });
@@ -257,7 +303,6 @@ function openMission(subject){
   renderMission();
 }
 function missionCloudLoad(){
-  // β7では操作確認とローカル保存を優先。
   restoreMissionPoints();
   renderMission();
 }
@@ -270,6 +315,7 @@ document.querySelectorAll('[data-mission]').forEach(button=>{
 document.querySelectorAll('[data-mission-switch]').forEach(button=>{
   button.onclick=()=>{
     missionSubject=button.dataset.missionSwitch;
+    openLevelMenuKey='';
     renderMission();
   };
 });
@@ -278,6 +324,7 @@ if(backButton)backButton.onclick=()=>showScreen('home');
 document.querySelectorAll('[data-mission-filter]').forEach(button=>{
   button.onclick=()=>{
     missionFilter=button.dataset.missionFilter;
+    openLevelMenuKey='';
     document.querySelectorAll('[data-mission-filter]').forEach(item=>item.classList.toggle('active',item===button));
     renderMission();
   };
