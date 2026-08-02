@@ -140,12 +140,71 @@ function problemMatchesFilter(problem){
   const records=recordsFor(missionSubject,problem.id);
   if(missionFilter==='unstarted')return !records.some(rec=>rec.solved);
   if(missionFilter==='review')return records.some(rec=>rec.level==='triangle');
-  if(missionFilter==='master')return records.every(rec=>rec.level==='double');
+  if(missionFilter==='master')return records[2]?.level==='double';
   if(missionFilter==='favorite')return isFavorite(missionSubject,problem.id);
   return true;
 }
+
+function openChapterKeys(){
+  return [...document.querySelectorAll('.mission-chapter[open]')]
+    .map(node=>node.dataset.chapterKey)
+    .filter(Boolean);
+}
+function closeMissionLevelPortal(){
+  document.querySelectorAll('.mission-level-portal').forEach(node=>node.remove());
+  openLevelMenuKey='';
+}
+function positionMissionLevelPortal(portal,anchor){
+  const rect=anchor.getBoundingClientRect();
+  const margin=8;
+  const width=Math.min(210,window.innerWidth-24);
+  portal.style.width=`${width}px`;
+  portal.style.left=`${Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2))}px`;
+
+  const portalHeight=portal.offsetHeight||190;
+  const roomBelow=window.innerHeight-rect.bottom;
+  const top=roomBelow>=portalHeight+margin
+    ? rect.bottom+margin
+    : Math.max(12,rect.top-portalHeight-margin);
+  portal.style.top=`${top}px`;
+}
+function openMissionLevelPortal(problem,round,rec,anchor){
+  closeMissionLevelPortal();
+  const portal=document.createElement('div');
+  portal.className='mission-level-portal';
+  portal.setAttribute('role','menu');
+  [
+    ['triangle','△'],
+    ['circle','○'],
+    ['double','👍✨✨✨'],
+    ['none','未解答']
+  ].forEach(([level,label])=>{
+    const option=document.createElement('button');
+    option.type='button';
+    option.className=`mission-level-option ${rec.level===level?'selected':''}`;
+    option.textContent=label;
+    option.onclick=event=>{
+      event.stopPropagation();
+      setUnderstanding(missionSubject,problem.id,round,level);
+      closeMissionLevelPortal();
+    };
+    portal.appendChild(option);
+  });
+  document.body.appendChild(portal);
+  requestAnimationFrame(()=>positionMissionLevelPortal(portal,anchor));
+  window.setTimeout(()=>{
+    const dismiss=event=>{
+      if(!portal.contains(event.target)&&event.target!==anchor){
+        closeMissionLevelPortal();
+        document.removeEventListener('pointerdown',dismiss,true);
+      }
+    };
+    document.addEventListener('pointerdown',dismiss,true);
+  },0);
+}
+
 function problemStatus(records){
-  if(records.every(rec=>rec.level==='double'))return {type:'master',label:'🏆 MASTER'};
+  if(records[2]?.level==='double')return {type:'master',label:'🏆 MASTER'};
   if(records.some(rec=>rec.solved))return {type:'challenge',label:'🔥 チャレンジ中'};
   return {type:'none',label:''};
 }
@@ -159,7 +218,7 @@ function createLevelMenu(problem,round,rec){
     ['triangle','△'],
     ['circle','○'],
     ['double','👍✨✨✨'],
-    ['none','未設定']
+    ['none','未解答']
   ].forEach(([level,label])=>{
     const option=document.createElement('button');
     option.type='button';
@@ -174,6 +233,7 @@ function createLevelMenu(problem,round,rec){
   return menu;
 }
 function renderMission(){
+  const previouslyOpen=openChapterKeys();
   const commercial=missionSubject==='commercial';
   const list=missionSubjectData();
   const stats=missionStats();
@@ -204,7 +264,8 @@ function renderMission(){
     const completed=problems.filter(problem=>recordsFor(missionSubject,problem.id).some(rec=>rec.solved)).length;
     const details=document.createElement('details');
     details.className='mission-chapter';
-    if(chapterIndex===0||missionFilter!=='all')details.open=true;
+    details.dataset.chapterKey=String(chapter);
+    if(previouslyOpen.includes(String(chapter))||chapterIndex===0||missionFilter!=='all')details.open=true;
     details.innerHTML=`
       <summary>
         <div class="mission-chapter-head">
@@ -213,7 +274,7 @@ function renderMission(){
             <small>${completed} / ${problems.length}問${completed===problems.length?'・COMPLETE':''}</small>
             <div class="chapter-mini-track"><div style="width:${problems.length?completed/problems.length*100:0}%"></div></div>
           </div>
-          <span>${completed===problems.length?'MASTER':'＋'}</span>
+          <span class="chapter-complete-message">${completed===problems.length?'全問題チャレンジすごい!! 😄':'＋'}</span>
         </div>
       </summary>
       <div class="mission-problems"></div>`;
@@ -267,20 +328,19 @@ function renderMission(){
         button.textContent=`${round}回転目`;
         button.setAttribute('aria-expanded',openLevelMenuKey===missionKey(missionSubject,problem.id,round)?'true':'false');
         button.onclick=event=>{
+          event.preventDefault();
           event.stopPropagation();
-          const key=missionKey(missionSubject,problem.id,round);
-          openLevelMenuKey=openLevelMenuKey===key?'':key;
-          renderMission();
+          openMissionLevelPortal(problem,round,rec,button);
         };
         wrap.appendChild(button);
 
         const selected=document.createElement('div');
         selected.className=`mission-selected-level level-${rec.level}`;
         selected.textContent=MISSION_LEVEL_DISPLAY[rec.level];
-        selected.setAttribute('aria-label',rec.level==='none'?'理解度未設定':`理解度 ${MISSION_LEVEL_DISPLAY[rec.level]}`);
+        selected.setAttribute('aria-label',rec.level==='none'?'未解答':`理解度 ${MISSION_LEVEL_DISPLAY[rec.level]}`);
         wrap.appendChild(selected);
 
-        wrap.appendChild(createLevelMenu(problem,round,rec));
+        
         rounds.appendChild(wrap);
       });
 
@@ -315,7 +375,7 @@ document.querySelectorAll('[data-mission]').forEach(button=>{
 document.querySelectorAll('[data-mission-switch]').forEach(button=>{
   button.onclick=()=>{
     missionSubject=button.dataset.missionSwitch;
-    openLevelMenuKey='';
+    closeMissionLevelPortal();
     renderMission();
   };
 });
@@ -324,7 +384,7 @@ if(backButton)backButton.onclick=()=>showScreen('home');
 document.querySelectorAll('[data-mission-filter]').forEach(button=>{
   button.onclick=()=>{
     missionFilter=button.dataset.missionFilter;
-    openLevelMenuKey='';
+    closeMissionLevelPortal();
     document.querySelectorAll('[data-mission-filter]').forEach(item=>item.classList.toggle('active',item===button));
     renderMission();
   };
