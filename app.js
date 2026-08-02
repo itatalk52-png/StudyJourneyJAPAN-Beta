@@ -303,24 +303,9 @@ updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProf
 
 
 
-/* Ver.2.1.0 β15: large numerals + smaller 時間/分 units */
-function formatOwnWeeklyTimeWithSmallUnits(timeNode){
-  if(!timeNode)return;
-  const raw=(timeNode.textContent||'').replace(/\s+/g,'');
-  const match=raw.match(/(\d{1,2})時間(\d{1,2})分/);
-  if(!match)return;
 
-  const hours=String(Math.min(99,Number(match[1])));
-  const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
 
-  timeNode.classList.add('friend-own-weekly-time-compact');
-  timeNode.innerHTML=
-    `<span class="friend-time-number">${hours}</span>`+
-    `<span class="friend-time-unit">時間</span>`+
-    `<span class="friend-time-number">${minutes}</span>`+
-    `<span class="friend-time-unit">分</span>`;
-  timeNode.setAttribute('aria-label',`${hours}時間${minutes}分`);
-}
+/* Ver.2.1.0 β16: self-card weekly time at 70%, right aligned, one line */
 function normalizeOwnWeeklyTimeDisplay(){
   const selfCard =
     document.querySelector('.friend-self-card') ||
@@ -330,33 +315,49 @@ function normalizeOwnWeeklyTimeDisplay(){
 
   if(!selfCard)return;
 
-  const all=[...selfCard.querySelectorAll('*')];
-  const label=all.find(node=>
+  const nodes=[...selfCard.querySelectorAll('*')];
+  const label=nodes.find(node=>
     node.children.length===0 &&
     /今週の簿記勉強時間/.test((node.textContent||'').trim())
   );
 
   let timeNode=null;
-  if(label&&label.parentElement){
-    timeNode=[...label.parentElement.querySelectorAll('*')].find(node=>
-      node!==label &&
-      /\d{1,2}\s*時間\s*\d{1,2}\s*分/.test((node.textContent||'').replace(/\s+/g,''))
-    );
+
+  if(label && label.parentElement){
+    timeNode=[...label.parentElement.querySelectorAll('*')].find(node=>{
+      const text=(node.textContent||'').replace(/\s+/g,'');
+      return node!==label && /\d{1,2}時間\d{1,2}分/.test(text);
+    });
   }
 
   if(!timeNode){
-    timeNode=all.find(node=>
-      /\d{1,2}\s*時間\s*\d{1,2}\s*分/.test((node.textContent||'').replace(/\s+/g,'')) &&
-      !node.querySelector('.friend-time-number')
-    );
+    timeNode=nodes.find(node=>{
+      const text=(node.textContent||'').replace(/\s+/g,'');
+      return node.children.length===0 && /\d{1,2}時間\d{1,2}分/.test(text);
+    });
   }
 
-  if(timeNode&&!timeNode.querySelector('.friend-time-number')){
-    formatOwnWeeklyTimeWithSmallUnits(timeNode);
+  if(!timeNode)return;
+
+  const compact=(timeNode.textContent||'').replace(/\s+/g,'');
+  const match=compact.match(/(\d{1,2})時間(\d{1,2})分/);
+  if(match){
+    const hours=Math.min(99,Number(match[1]));
+    const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
+    timeNode.textContent=`${hours}時間${minutes}分`;
   }
+
+  timeNode.classList.add('friend-own-weekly-time-beta16');
+  timeNode.setAttribute('aria-label',timeNode.textContent);
 }
-const beta15Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+
+const beta16Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+
 window.addEventListener('DOMContentLoaded',()=>{
   normalizeOwnWeeklyTimeDisplay();
-  beta15Observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+  beta16Observer.observe(document.body,{
+    subtree:true,
+    childList:true,
+    characterData:true
+  });
 });

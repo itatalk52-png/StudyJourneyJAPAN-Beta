@@ -1631,3 +1631,66 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
     min-width:116px !important;
   }
 }
+
+/* ============================================================
+   Ver.2.1.0 β16 Complete — Friends self-card weekly time
+   ============================================================ */
+
+/* Own card only: 70% of the former size, right aligned, always one line */
+.friend-own-weekly-time-beta16{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  margin:4px 0 0 auto !important;
+  padding:0 !important;
+
+  text-align:right !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:normal !important;
+  line-break:strict !important;
+
+  font-size:70% !important;
+  line-height:1.05 !important;
+  font-weight:900 !important;
+  letter-spacing:-0.04em !important;
+  font-variant-numeric:tabular-nums !important;
+}
+
+/* Ensure the own-card right column behaves like the ranking time column */
+.friend-self-card > :last-child,
+.friends-self-card > :last-child,
+.friends-hero-card > :last-child,
+[data-friend-self] > :last-child{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
+  min-width:118px !important;
+  max-width:42% !important;
+  text-align:right !important;
+  overflow:visible !important;
+}
+
+/* Keep the heading above the time aligned to the right too */
+.friend-self-card > :last-child > *,
+.friends-self-card > :last-child > *,
+.friends-hero-card > :last-child > *,
+[data-friend-self] > :last-child > *{
+  text-align:right !important;
+}
+
+@media(max-width:390px){
+  .friend-own-weekly-time-beta16{
+    font-size:66% !important;
+    letter-spacing:-0.055em !important;
+  }
+
+  .friend-self-card > :last-child,
+  .friends-self-card > :last-child,
+  .friends-hero-card > :last-child,
+  [data-friend-self] > :last-child{
+    min-width:108px !important;
+  }
+}
