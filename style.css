@@ -1148,3 +1148,66 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
 .mission-round.done{color:#2f3f38;border-color:#c7a84e}
 .mission-round.level-double{color:#243c32!important;background:#e6c76c!important}
 @media(max-width:560px){.mission-round{height:33px!important;font-size:9px!important;padding:0 5px!important}}
+
+
+/* ============================================================
+   Ver.2.1.0 β6 Complete
+   ============================================================ */
+
+/* Home: move the separator and MISSION area lower, with generous spacing */
+#homeScreen .home-mission-separator{
+  margin-top:clamp(34px,7vw,48px) !important;
+  margin-bottom:clamp(24px,5vw,34px) !important;
+}
+#homeScreen .mission-launch-grid{
+  margin-top:0 !important;
+  margin-bottom:clamp(24px,5vw,34px) !important;
+}
+
+/* Home MISSION labels: both lines sit exactly in the center */
+#homeScreen .mission-launch{
+  display:grid !important;
+  grid-template-rows:auto auto;
+  place-content:center !important;
+  place-items:center !important;
+  text-align:center !important;
+}
+#homeScreen .mission-launch strong,
+#homeScreen .mission-launch small{
+  display:block !important;
+  width:100% !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  text-align:center !important;
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+/* Timer MISSION labels: exact horizontal centering */
+.timer-mission-launch .mission-launch{
+  display:grid !important;
+  grid-template-rows:auto auto;
+  place-content:center !important;
+  place-items:center !important;
+  text-align:center !important;
+}
+.timer-mission-launch .mission-launch strong,
+.timer-mission-launch .mission-launch small{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+/* Third round uses the same champagne-gold gradient as Home MISSION buttons */
+.mission-round:nth-child(3){
+  background:linear-gradient(145deg,#f5ebc9 0%,#ecdda9 54%,#e6d296 100%) !important;
+  border-color:#d8c998 !important;
+}
+.mission-round:nth-child(3).done,
+.mission-round:nth-child(3).level-double{
+  background:linear-gradient(145deg,#f5ebc9 0%,#ecdda9 54%,#e6d296 100%) !important;
+  color:#263b33 !important;
+  border-color:#c8aa4f !important;
+}

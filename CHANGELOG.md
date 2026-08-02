@@ -1,3 +1,9 @@
+# Ver.2.1.0 β6 Complete
+
+- Refined spacing below START and around the Home MISSION area.
+- Centered both lines inside Home and Timer MISSION buttons.
+- Matched the third-round button to the Home champagne-gold gradient.
+
 # Ver.2.1.0 β5 Complete
 
 - Added one-second K-PLAS splash screen.
