@@ -1,3 +1,9 @@
+# Ver.2.1.0 β5 Complete
+
+- Added one-second K-PLAS splash screen.
+- Refined Home spacing and centered MISSION labels.
+- Reduced MISSION tracking to three rounds with champagne-gold gradient.
+
 # Ver.2.1.0 β4 Complete
 
 - Narrowed and centered Home MISSION buttons.

@@ -1115,3 +1115,36 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
     height:29px !important;
   }
 }
+
+/* ============================================================
+   Ver.2.1.0 β5 Complete
+   ============================================================ */
+.sjj-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:linear-gradient(180deg,#eff8ff 0%,#fff 65%,#f7fbf7 100%);opacity:1;transition:opacity .24s ease}
+.sjj-splash.hide{opacity:0;pointer-events:none}
+.sjj-splash-inner{width:min(86vw,420px);text-align:center;color:#23463b;padding:24px}
+.sjj-splash-title{font-size:clamp(24px,6vw,38px);line-height:1.1;font-weight:900;letter-spacing:.04em}
+.sjj-splash-subtitle{margin-top:14px;font-size:clamp(13px,3.5vw,18px);font-weight:700;letter-spacing:.05em}
+.sjj-splash-route{width:66%;height:1px;margin:22px auto 18px;background:linear-gradient(90deg,transparent,#e6c76c 20%,#b7d5ca 80%,transparent);position:relative}
+.sjj-splash-route span{position:absolute;top:50%;left:16%;width:8px;height:8px;border-radius:50%;background:#e6c76c;transform:translate(-50%,-50%);animation:sjjRouteDot .68s ease forwards}
+@keyframes sjjRouteDot{from{left:16%}to{left:84%}}
+.sjj-splash-supported{margin-top:18px;font-size:11px;font-weight:800;letter-spacing:.16em;color:#77867f}
+
+/* Home spacing */
+#homeScreen .home-mission-separator{margin-top:clamp(26px,5vw,36px);margin-bottom:clamp(22px,4.5vw,30px)}
+#homeScreen .mission-launch-grid{margin-top:0;margin-bottom:clamp(22px,4.5vw,30px)}
+#homeScreen .mission-launch{align-items:center!important;justify-content:center!important;text-align:center!important}
+#homeScreen .mission-launch strong,#homeScreen .mission-launch small{width:100%;text-align:center!important;align-self:center!important}
+
+/* Timer centering */
+.timer-mission-launch .mission-launch{align-items:center!important;justify-content:center!important;text-align:center!important}
+.timer-mission-launch .mission-launch strong,.timer-mission-launch .mission-launch small{width:100%;text-align:center!important}
+
+/* Three rounds */
+.mission-rounds{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%;overflow:visible!important}
+.mission-round{width:100%!important;min-width:0!important;height:34px!important;padding:0 8px!important;border-radius:999px!important;font-size:10px!important;font-weight:900;white-space:nowrap;color:#3d443f;border:1px solid rgba(185,151,62,.32);box-shadow:0 3px 9px rgba(124,99,35,.10)}
+.mission-round:nth-child(1){background:#f7f0d8!important}
+.mission-round:nth-child(2){background:#efdda6!important}
+.mission-round:nth-child(3){background:#e6c76c!important}
+.mission-round.done{color:#2f3f38;border-color:#c7a84e}
+.mission-round.level-double{color:#243c32!important;background:#e6c76c!important}
+@media(max-width:560px){.mission-round{height:33px!important;font-size:9px!important;padding:0 5px!important}}
