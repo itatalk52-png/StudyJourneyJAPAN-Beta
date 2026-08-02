@@ -299,3 +299,55 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.run
 window.addEventListener('pageshow',()=>{if(state.running){reconcileRunningTime();renderAll();startTimerLoop();}});
 window.addEventListener('beforeunload',()=>{if(state.running)reconcileRunningTime();});
 updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProfile,400);else{loadCloudState(false).finally(()=>{loadRanking();loadCalendar(false);syncPendingMinutes();});}
+
+
+/* Ver.2.1.0 β14: keep the own Friends weekly time on one line */
+function normalizeOwnWeeklyTimeDisplay(){
+  const selfCard =
+    document.querySelector('.friend-self-card') ||
+    document.querySelector('.friends-self-card') ||
+    document.querySelector('.friends-hero-card') ||
+    document.querySelector('[data-friend-self]');
+
+  if(!selfCard)return;
+
+  const labels=[...selfCard.querySelectorAll('*')];
+  const label=labels.find(node=>
+    node.children.length===0 &&
+    /今週の簿記勉強時間/.test((node.textContent||'').trim())
+  );
+
+  let timeNode=null;
+  if(label){
+    const container=label.parentElement;
+    if(container){
+      timeNode=[...container.querySelectorAll('*')].find(node=>
+        node!==label &&
+        node.children.length===0 &&
+        /\d+\s*時間\s*\d+\s*分/.test((node.textContent||'').replace(/\s+/g,''))
+      );
+    }
+  }
+
+  if(!timeNode){
+    timeNode=[...selfCard.querySelectorAll('*')].find(node=>
+      node.children.length===0 &&
+      /\d+\s*時間\s*\d+\s*分/.test((node.textContent||'').replace(/\s+/g,''))
+    );
+  }
+
+  if(timeNode){
+    const compact=(timeNode.textContent||'').replace(/\s+/g,'');
+    const match=compact.match(/(\d+)時間(\d+)分/);
+    if(match){
+      timeNode.textContent=`${match[1]}時間${match[2].padStart(2,'0')}分`;
+    }
+    timeNode.classList.add('friend-own-weekly-time-nowrap');
+    timeNode.setAttribute('aria-label',timeNode.textContent);
+  }
+}
+const beta14Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+window.addEventListener('DOMContentLoaded',()=>{
+  normalizeOwnWeeklyTimeDisplay();
+  beta14Observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+});
