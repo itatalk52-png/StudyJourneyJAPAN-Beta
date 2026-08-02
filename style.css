@@ -1499,3 +1499,32 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
   overflow-wrap:normal !important;
   min-width:max-content !important;
 }
+
+/* Ver.2.1.0 β13 Complete — mission caption */
+.mission-launch{
+  min-height:48px !important;
+  padding-top:7px !important;
+  padding-bottom:6px !important;
+}
+.mission-launch .mission-caption{
+  display:block;
+  width:100%;
+  margin:0 0 3px;
+  text-align:center;
+  font-size:8px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:.08em;
+  color:#7d827f;
+  white-space:nowrap;
+}
+.mission-launch strong,
+.mission-launch small{
+  text-align:center !important;
+}
+@media(max-width:560px){
+  .mission-launch .mission-caption{
+    font-size:7.5px;
+    letter-spacing:.06em;
+  }
+}
