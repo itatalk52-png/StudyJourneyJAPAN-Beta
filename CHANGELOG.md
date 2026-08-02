@@ -1,3 +1,9 @@
+# Ver.2.1.0 β2
+
+- Refined Home and Timer MISSION buttons with a lighter champagne-gold design.
+- Enabled direct interaction with each 1–5 MISSION round button.
+- Added offline pre-caching for maps, badge images, icons, MISSION data and core app files.
+
 # Ver.2.0.8 Official Release
 
 - Updated the post-update profile flow for registered users.

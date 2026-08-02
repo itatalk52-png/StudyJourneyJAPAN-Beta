@@ -38,8 +38,8 @@
         <div class="timer-large" id="homeTimer">00:00:00</div>
         <button class="primary-btn" id="homeStart">START</button>
         <div class="mission-launch-grid">
-          <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>（商業簿記）</small></button>
-          <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>（工業簿記）</small></button>
+          <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>商業簿記</small></button>
+          <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>工業簿記</small></button>
         </div>
         <div class="hero-grid">
           <div><span>Today</span><strong id="todayMinutes">0 min</strong></div>
@@ -103,8 +103,8 @@
         <div class="timer-note">1分 = 1ポイント / 10分 = 1バッジ</div><div class="sync-state" id="pendingSync">同期済み</div>
       </div>
       <div class="mission-launch-grid timer-mission-launch">
-        <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>（商業簿記）</small></button>
-        <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>（工業簿記）</small></button>
+        <button class="mission-launch" data-mission="commercial"><strong>COM. MISSION</strong><small>商業簿記</small></button>
+        <button class="mission-launch" data-mission="industrial"><strong>IND. MISSION</strong><small>工業簿記</small></button>
       </div>
     </section>
 
@@ -291,7 +291,7 @@
   </form>
   <section class="manual-update-section" aria-labelledby="manualUpdateHeading">
     <div class="panel-kicker" id="manualUpdateHeading">APP VERSION</div>
-    <div class="current-version">Version <strong id="currentAppVersion">2.1.0 β1</strong></div>
+    <div class="current-version">Version <strong id="currentAppVersion">2.1.0 β2</strong></div>
     <button class="primary-btn manual-update-button" id="manualUpdateButton" type="button">🚀 最新バージョンで旅をする</button>
     <p class="manual-update-help">最新バージョンがあるかもしれません。<br>こちらを押してみてください。</p>
     <div class="manual-update-result" id="manualUpdateResult" role="status" aria-live="polite"></div>
@@ -329,7 +329,7 @@
 <script src="mission.js"></script>
 <script>
 (() => {
-  const APP_VERSION = "2.1.0 β1";
+  const APP_VERSION = "2.1.0 β2";
   document.getElementById("currentAppVersion").textContent = APP_VERSION;
 
   if (!("serviceWorker" in navigator)) {
