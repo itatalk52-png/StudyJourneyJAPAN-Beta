@@ -1,17 +1,35 @@
 Study Journey JAPAN Ver.2.1.0 Official Release
 
-MISSION機能を追加しました。
+β13 Completeで確認した内容を正式版としてリリースします。
 
-- Home・Timer画面にゴールド（#e6c76c）の COM. MISSION / IND. MISSION ボタン
-- 商業簿記・工業簿記の全問題一覧
-- Chapterごとの折りたたみ表示と進捗バー
-- 5回転管理
-- 理解度 △／○／◎
-- 解答済み🔥・5回転完了MASTER
-- 未挑戦／△だけ／MASTERの絞り込み
-- 1問・1回転につき2ポイント
-- 各回転コンプリート50ポイント
-- 5回転完全制覇200ポイント
-- 問題演習履歴・ポイントをスプレッドシートへ同期
+【新機能】
+- Home・Timerに2級問題集MISSIONを追加
+- COM. MISSION（商業簿記）
+- IND. MISSION（工業簿記）
+- 商業簿記・工業簿記の問題一覧
+- 3回転の学習記録
+- 理解度：△・○・👍✨✨✨・未解答
+- 🔥 チャレンジ中
+- 3回転目が👍✨✨✨になると🏆 MASTER
+- Chapter内の全問題へチャレンジすると
+  「全問題チャレンジすごい!! 😄」
+- MISSION進捗、ポイント、お気に入り、絞り込み
+- オフラインキャッシュ
+- 起動画面
+  Study Journey JAPAN
+  沖縄から北海道へ、日本縦断の旅。
+  Supported by K-PLAS
 
-重要：今回はApps Scriptに新機能を追加しているため、AppsScript_Code.gsの貼り替えと再デプロイが必要です。
+【画面調整】
+- Home・TimerのMISSIONボタンをシャンパンゴールドで統一
+- Friendsの今週の簿記勉強時間を1行表示
+- 各種余白、中央揃え、スマホ表示を調整
+
+【導入】
+- 正式版のStudyJourneyJAPANリポジトリへ上書き
+- CommitしてPush
+- GitHub Pagesの更新を待つ
+- Apps Scriptの変更はありません
+
+注意
+- 正式版へ反映する前に、現在の正式版フォルダをバックアップしておくことを推奨します。
