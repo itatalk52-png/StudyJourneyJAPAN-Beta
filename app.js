@@ -305,7 +305,9 @@ updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProf
 
 
 
-/* Ver.2.1.0 β16: self-card weekly time at 70%, right aligned, one line */
+
+
+/* Ver.2.1.0 β17: fixed two-line self-card weekly time */
 function normalizeOwnWeeklyTimeDisplay(){
   const selfCard =
     document.querySelector('.friend-self-card') ||
@@ -333,7 +335,7 @@ function normalizeOwnWeeklyTimeDisplay(){
   if(!timeNode){
     timeNode=nodes.find(node=>{
       const text=(node.textContent||'').replace(/\s+/g,'');
-      return node.children.length===0 && /\d{1,2}時間\d{1,2}分/.test(text);
+      return /\d{1,2}時間\d{1,2}分/.test(text);
     });
   }
 
@@ -341,21 +343,23 @@ function normalizeOwnWeeklyTimeDisplay(){
 
   const compact=(timeNode.textContent||'').replace(/\s+/g,'');
   const match=compact.match(/(\d{1,2})時間(\d{1,2})分/);
-  if(match){
-    const hours=Math.min(99,Number(match[1]));
-    const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
-    timeNode.textContent=`${hours}時間${minutes}分`;
-  }
+  if(!match)return;
 
-  timeNode.classList.add('friend-own-weekly-time-beta16');
-  timeNode.setAttribute('aria-label',timeNode.textContent);
+  const hours=String(Math.min(99,Number(match[1]))).padStart(2,'0');
+  const minutes=String(Math.min(59,Number(match[2]))).padStart(2,'0');
+
+  timeNode.classList.add('friend-own-weekly-time-beta17');
+  timeNode.innerHTML=
+    `<span class="friend-time-line">${hours}時間</span>`+
+    `<span class="friend-time-line">${minutes}分</span>`;
+  timeNode.setAttribute('aria-label',`${hours}時間${minutes}分`);
 }
 
-const beta16Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
+const beta17Observer=new MutationObserver(()=>normalizeOwnWeeklyTimeDisplay());
 
 window.addEventListener('DOMContentLoaded',()=>{
   normalizeOwnWeeklyTimeDisplay();
-  beta16Observer.observe(document.body,{
+  beta17Observer.observe(document.body,{
     subtree:true,
     childList:true,
     characterData:true
