@@ -899,3 +899,106 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
     grid-template-columns:48px minmax(0,1fr);
   }
 }
+
+/* Ver.2.1.0 Beta3: compact pill-style MISSION buttons */
+.mission-launch{
+  min-height:40px;
+  border-radius:999px;
+  padding:6px 16px 5px;
+}
+.mission-launch strong{
+  line-height:1;
+}
+.mission-launch small{
+  line-height:1;
+  margin-top:2px;
+}
+
+/* Timer MISSION buttons: narrower, centered and stronger labels */
+.timer-mission-launch{
+  width:min(76%,420px);
+  max-width:420px;
+  margin:16px auto 0;
+  gap:10px;
+}
+.timer-mission-launch .mission-launch{
+  min-height:42px;
+  padding:6px 14px 5px;
+}
+.timer-mission-launch .mission-launch strong{
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.07em;
+}
+.timer-mission-launch .mission-launch small{
+  font-size:10px;
+  font-weight:700;
+}
+
+/* Round buttons use full labels and wrap cleanly */
+.mission-rounds{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(64px,1fr));
+  gap:6px;
+  width:100%;
+  margin-top:10px;
+}
+.mission-round{
+  width:auto;
+  min-width:64px;
+  height:34px;
+  padding:0 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.mission-problem{
+  grid-template-columns:minmax(0,1fr);
+  gap:6px;
+}
+.mission-problem-main{
+  width:100%;
+}
+.mission-round.done{
+  background:#fff4c9;
+  border-color:#d3b15b;
+  box-shadow:0 2px 8px rgba(145,111,29,.10);
+}
+.mission-round.done::before{
+  content:"🔥";
+  margin-right:3px;
+}
+.mission-round.level-triangle::after{content:" △";}
+.mission-round.level-circle::after{content:" ○";}
+.mission-round.level-double::after{content:" ◎";}
+.mission-round.level-double{
+  background:var(--forest);
+  border-color:var(--forest);
+  color:#fff;
+}
+
+@media(max-width:560px){
+  .mission-launch{
+    min-height:38px;
+    padding:5px 12px 4px;
+  }
+  .timer-mission-launch{
+    width:min(88%,390px);
+  }
+  .timer-mission-launch .mission-launch strong{
+    font-size:14px;
+  }
+  .mission-rounds{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .mission-round{
+    min-width:0;
+    width:100%;
+    height:36px;
+    font-size:11px;
+  }
+  .mission-rounds .mission-round:last-child{
+    grid-column:1 / -1;
+  }
+}

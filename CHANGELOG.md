@@ -1,3 +1,10 @@
+# Ver.2.1.0 β3
+
+- Compact pill-shaped MISSION buttons on Home.
+- Narrower centered MISSION buttons on Timer with larger bold labels.
+- Replaced numeric round buttons with 1回転目〜5回転目.
+- Added visible 🔥 and understanding marks after recording.
+
 # Ver.2.1.0 β2
 
 - Refined Home and Timer MISSION buttons with a lighter champagne-gold design.
