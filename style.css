@@ -1211,3 +1211,52 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
   color:#263b33 !important;
   border-color:#c8aa4f !important;
 }
+
+/* ============================================================
+   Ver.2.1.0 β7 Complete — interactive MISSION
+   ============================================================ */
+.mission-problem{
+  position:relative;
+}
+.mission-problem-main{
+  cursor:pointer !important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.mission-rounds{
+  pointer-events:auto !important;
+}
+.mission-round{
+  cursor:pointer !important;
+  pointer-events:auto !important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  display:flex !important;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+}
+.mission-round .round-label{
+  display:block;
+  line-height:1;
+}
+.mission-round .round-state{
+  display:block;
+  min-height:11px;
+  margin-top:2px;
+  line-height:1;
+  font-size:10px;
+  font-weight:900;
+}
+.mission-round.done{
+  outline:2px solid rgba(193,157,55,.22);
+  box-shadow:0 4px 12px rgba(121,96,33,.14);
+}
+.mission-round.level-triangle .round-state{color:#766b44;}
+.mission-round.level-circle .round-state{color:#3f6c5c;}
+.mission-round.level-double .round-state{color:#253f35;}
+.mission-favorite{
+  pointer-events:auto !important;
+  z-index:2;
+}
