@@ -1,3 +1,11 @@
+# Ver.2.1.0 β4 Complete
+
+- Narrowed and centered Home MISSION buttons.
+- Added a subtle divider beneath START.
+- Centered Timer MISSION labels and reduced button width.
+- Kept all five round buttons compact and on one line.
+- Added mission favorites and favorite filtering.
+
 # Ver.2.1.0 β3
 
 - Compact pill-shaped MISSION buttons on Home.
