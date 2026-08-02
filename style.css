@@ -1470,3 +1470,32 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
     font-size:10px;
   }
 }
+
+/* Ver.2.1.0 β12 Complete */
+#homeScreen .home-mission-separator,
+[data-screen="home"] .home-mission-separator{
+  margin-bottom:clamp(38px,9vw,60px) !important;
+}
+#homeScreen .mission-launch-grid,
+[data-screen="home"] .mission-launch-grid{
+  margin-top:0 !important;
+}
+
+.friend-self-card .friend-time,
+.friend-self-card .friend-time-value,
+.friend-self-card .weekly-study-time,
+.friends-hero .friend-time,
+.friends-hero .weekly-study-time,
+#myWeeklyTime,
+#friendOwnWeeklyTime,
+[id*="WeeklyTime"],
+[class*="weekly-time"],
+[class*="friend-time"]{
+  display:inline-flex !important;
+  flex-wrap:nowrap !important;
+  align-items:baseline !important;
+  white-space:nowrap !important;
+  word-break:keep-all !important;
+  overflow-wrap:normal !important;
+  min-width:max-content !important;
+}
