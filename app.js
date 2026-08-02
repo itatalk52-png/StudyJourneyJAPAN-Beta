@@ -372,3 +372,63 @@ window.addEventListener('DOMContentLoaded',()=>{
   const observer=new MutationObserver(()=>scheduleFriendsSelfCardBeta18());
   observer.observe(document.body,{subtree:true,childList:true,characterData:true});
 });
+
+
+/* Ver.2.1.0 β18.2: restore weekly study time on ranking cards */
+function restoreRankingWeeklyTimesBeta182(){
+  const cards=[...document.querySelectorAll(
+    '.friend-card, .friends-card, .ranking-card, [data-friend-card]'
+  )].filter(card=>
+    !card.matches('.friend-self-card,.friends-self-card,.friends-hero-card,[data-friend-self]')
+  );
+
+  cards.forEach(card=>{
+    const text=(card.textContent||'').replace(/\s+/g,'');
+    if(!/今週の簿記勉強時間/.test(text))return;
+
+    const nicknameNode=[...card.querySelectorAll('*')].find(node=>
+      node.children.length===0 &&
+      node.textContent &&
+      !/今週の簿記勉強時間|pt|時間|分/.test(node.textContent.trim())
+    );
+
+    const nickname=(nicknameNode?.textContent||'').trim();
+    if(!nickname)return;
+
+    const source=(window.lastFriendsRanking||window.friendsRanking||window.rankingData||[]);
+    const row=Array.isArray(source)
+      ? source.find(item=>(item.nickname||item.name||'').trim()===nickname)
+      : null;
+    if(!row)return;
+
+    const minutes=Number(row.weeklyMinutes ?? row.minutes ?? row.studyMinutes ?? row.weekMinutes ?? 0);
+    const hours=Math.floor(minutes/60);
+    const mins=minutes%60;
+    const formatted=`${hours}時間${String(mins).padStart(2,'0')}分`;
+
+    const candidates=[...card.querySelectorAll('*')];
+    const label=candidates.find(node=>
+      node.children.length===0 &&
+      /今週の簿記勉強時間/.test((node.textContent||'').trim())
+    );
+    if(!label||!label.parentElement)return;
+
+    let value=[...label.parentElement.querySelectorAll('*')].find(node=>
+      node!==label &&
+      node.children.length===0 &&
+      /\d+時間\d+分/.test((node.textContent||'').replace(/\s+/g,''))
+    );
+
+    if(!value){
+      value=document.createElement('strong');
+      value.className='friend-ranking-weekly-time-beta182';
+      label.parentElement.insertBefore(value,label.nextSibling);
+    }
+    value.textContent=formatted;
+  });
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  restoreRankingWeeklyTimesBeta182();
+  const observer=new MutationObserver(()=>restoreRankingWeeklyTimesBeta182());
+  observer.observe(document.body,{subtree:true,childList:true,characterData:true});
+});
