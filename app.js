@@ -19,7 +19,7 @@ const STORAGE_KEY='sjj_state_v9_cloud';
 const OLD_STORAGE_KEYS=['sjj_state_v8_1_timer','sjj_state_v8_calendar','sjj_state_v7_cheers','sjj_state_v6_multi','sjj_state_v5_multi'];
 const PROFILE_KEY='sjj_profile_v2';
 const OLD_PROFILE_KEY='sjj_profile_v1';
-const defaultState={totalSeconds:0,running:false,sessionStartSeconds:0,activeLastAccountedAt:0,pendingStudySeconds:0,pendingDailySeconds:{},serverWeeklyMinutes:0,serverTotalMinutes:0,cheerPoints:0,medalPoints:0,streakPoints:0,missionPoints:0,currentStreak:0,todayQualified:false,todayServerMinutes:0,badgeHistory:[],lastCloudSync:''};
+const defaultState={totalSeconds:0,running:false,sessionStartSeconds:0,activeLastAccountedAt:0,pendingStudySeconds:0,pendingDailySeconds:{},pendingRecordIds:{},serverWeeklyMinutes:0,serverTotalMinutes:0,cheerPoints:0,medalPoints:0,streakPoints:0,missionPoints:0,currentStreak:0,todayQualified:false,todayServerMinutes:0,badgeHistory:[],lastCloudSync:''};
 let storedState=localStorage.getItem(STORAGE_KEY);
 if(!storedState) for(const key of OLD_STORAGE_KEYS){storedState=localStorage.getItem(key);if(storedState)break;}
 let state=Object.assign({},defaultState,JSON.parse(storedState||'{}'));if(!state.pendingDailySeconds||typeof state.pendingDailySeconds!=='object')state.pendingDailySeconds={};if((state.pendingStudySeconds||0)>0&&!Object.values(state.pendingDailySeconds).some(Number))state.pendingDailySeconds[localDateKey()]=state.pendingStudySeconds;
@@ -112,7 +112,81 @@ function clearAvatarSelection(){pendingAvatarData='';document.getElementById('av
 async function handleAvatarFile(event){const file=event.target.files?.[0],msg=document.getElementById('registerMessage');if(!file)return;if(!file.type.startsWith('image/')){msg.textContent='画像ファイルを選んでください。';return;}if(file.size>8*1024*1024){msg.textContent='画像は8MB以下にしてください。';return;}try{msg.textContent='画像を準備しています…';pendingAvatarData=await compressImage(file,256,0.82);updateAvatarPreview(pendingAvatarData,document.getElementById('nicknameInput').value);msg.textContent='アイコンを選択しました。登録ボタンで保存されます。';}catch(e){pendingAvatarData='';msg.textContent='画像を読み込めませんでした。別の画像をお試しください。';}}
 function compressImage(file,maxSize,quality){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{const size=Math.min(img.width,img.height),sx=(img.width-size)/2,sy=(img.height-size)/2,canvas=document.createElement('canvas');canvas.width=maxSize;canvas.height=maxSize;canvas.getContext('2d').drawImage(img,sx,sy,size,size,0,0,maxSize,maxSize);URL.revokeObjectURL(url);resolve(canvas.toDataURL('image/jpeg',quality));}catch(e){reject(e);}};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('image error'));};img.src=url;});}
 
-async function syncPendingMinutes(){if(!profile||syncing)return;const entries=Object.entries(state.pendingDailySeconds||{}).map(([date,seconds])=>({date,minutes:Math.floor(Number(seconds||0)/60)})).filter(x=>x.minutes>0).sort((a,b)=>a.date.localeCompare(b.date));if(!entries.length)return;syncing=true;const total=entries.reduce((a,b)=>a+b.minutes,0);toast(`${total}分を記録しています…`);let lastData=null;try{for(const item of entries){const data=await apiPost({action:'addStudy',userId:profile.userId,minutes:String(item.minutes),studyDate:item.date,currentPrefecture:currentPrefecture()});state.pendingDailySeconds[item.date]=Math.max(0,Number(state.pendingDailySeconds[item.date]||0)-item.minutes*60);lastData=data;if(data.medalPointsAdded)toast(`${medalLabel(data.medal)}を獲得しました！ +${data.medalPointsAdded}pt 🎉`);if(data.streakBonusAdded)toast(`連続学習${data.streak}日目！ +${data.streakBonusAdded}pt 🎉`);}state.pendingStudySeconds=Object.values(state.pendingDailySeconds).reduce((a,b)=>a+Number(b||0),0);if(lastData){state.serverWeeklyMinutes=Number(lastData.weeklyMinutes)||0;state.serverTotalMinutes=Number(lastData.totalMinutes)||0;state.cheerPoints=Number(lastData.cheerPoints)||0;state.medalPoints=Number(lastData.medalPoints)||0;state.streakPoints=Number(lastData.streakPoints)||0;state.currentStreak=Number(lastData.streak)||0;if(Array.isArray(lastData.newBadges)&&lastData.newBadges.length)state.badgeHistory=[...(state.badgeHistory||[]),...lastData.newBadges];state.totalSeconds=state.serverTotalMinutes*60+state.pendingStudySeconds;}save();toast(`${total}分をランキングとカレンダーへ反映しました`);await Promise.all([loadRanking(),loadCalendar(false)]);}catch(e){toast('記録の送信に失敗しました。次回停止時に再送します：'+e.message,'error');}finally{syncing=false;renderAll();}}
+async function syncPendingMinutes(){
+  if(!profile||syncing)return;
+  state.pendingRecordIds=state.pendingRecordIds||{};
+  const entries=Object.entries(state.pendingDailySeconds||{})
+    .map(([date,seconds])=>({date,minutes:Math.floor(Number(seconds||0)/60)}))
+    .filter(x=>x.minutes>0)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  if(!entries.length)return;
+
+  syncing=true;
+  const total=entries.reduce((a,b)=>a+b.minutes,0);
+  toast(`${total}分を記録しています…`);
+  let lastData=null;
+
+  try{
+    for(const item of entries){
+      if(!state.pendingRecordIds[item.date]){
+        state.pendingRecordIds[item.date]=createStudyRecordId(item.date);
+        save();
+      }
+      const recordId=state.pendingRecordIds[item.date];
+      const data=await apiPost({
+        action:'addStudy',
+        userId:profile.userId,
+        minutes:String(item.minutes),
+        studyDate:item.date,
+        currentPrefecture:currentPrefecture(),
+        recordId
+      });
+
+      state.pendingDailySeconds[item.date]=Math.max(
+        0,
+        Number(state.pendingDailySeconds[item.date]||0)-item.minutes*60
+      );
+      delete state.pendingRecordIds[item.date];
+      save();
+      lastData=data;
+
+      if(data.duplicate){
+        toast('同じ学習記録の二重送信を防止しました');
+      }else{
+        if(data.medalPointsAdded)toast(`${medalLabel(data.medal)}を獲得しました！ +${data.medalPointsAdded}pt 🎉`);
+        if(data.streakBonusAdded)toast(`連続学習${data.streak}日目！ +${data.streakBonusAdded}pt 🎉`);
+      }
+    }
+
+    state.pendingStudySeconds=Object.values(state.pendingDailySeconds)
+      .reduce((a,b)=>a+Number(b||0),0);
+
+    if(lastData){
+      state.serverWeeklyMinutes=Number(lastData.weeklyMinutes)||0;
+      state.serverTotalMinutes=Number(lastData.totalMinutes)||0;
+      state.cheerPoints=Number(lastData.cheerPoints)||0;
+      state.medalPoints=Number(lastData.medalPoints)||0;
+      state.streakPoints=Number(lastData.streakPoints)||0;
+      state.currentStreak=Number(lastData.streak)||0;
+      if(Array.isArray(lastData.newBadges)&&lastData.newBadges.length){
+        state.badgeHistory=[...(state.badgeHistory||[]),...lastData.newBadges];
+      }
+      state.totalSeconds=state.serverTotalMinutes*60+state.pendingStudySeconds;
+    }
+    save();
+    renderAll();
+  }catch(e){
+    toast(e.message||'学習時間の同期に失敗しました','error');
+  }finally{
+    syncing=false;
+  }
+}
+function createStudyRecordId(studyDate){
+  const random=(globalThis.crypto&&crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2,12)}`;
+  return `study-${profile?.userId||'unknown'}-${studyDate}-${random}`;
+}
 function addElapsedSeconds(startMs,endMs){
   let seconds=Math.max(0,Math.floor((endMs-startMs)/1000));
   if(!seconds)return 0;
@@ -129,13 +203,147 @@ function addElapsedSeconds(startMs,endMs){
   state.pendingStudySeconds=Object.values(state.pendingDailySeconds).reduce((a,b)=>a+Number(b||0),0);
   return seconds;
 }
+const LONG_SESSION_CONFIRM_SECONDS=6*60*60;
+const LONG_SESSION_AUTO_STOP_SECONDS=24*60*60;
+let longSessionDialogOpen=false;
+
 function reconcileRunningTime(){
   if(!state.running)return 0;
   const now=Date.now();
-  if(!Number(state.activeLastAccountedAt)){state.activeLastAccountedAt=now;save();return 0;}
+
+  if(!Number(state.activeLastAccountedAt)){
+    state.activeLastAccountedAt=now;
+    save();
+    return 0;
+  }
+
+  const rawSeconds=Math.max(
+    0,
+    Math.floor((now-Number(state.activeLastAccountedAt))/1000)
+  );
+
+  if(rawSeconds>=LONG_SESSION_CONFIRM_SECONDS){
+    state.running=false;
+    state.activeLastAccountedAt=0;
+    clearInterval(interval);
+    interval=null;
+    save();
+    openLongSessionDialog(rawSeconds,rawSeconds>=LONG_SESSION_AUTO_STOP_SECONDS);
+    renderAll();
+    return 0;
+  }
+
   const added=addElapsedSeconds(Number(state.activeLastAccountedAt),now);
-  if(added){state.activeLastAccountedAt=Number(state.activeLastAccountedAt)+added*1000;save();}
+  if(added){
+    state.activeLastAccountedAt=Number(state.activeLastAccountedAt)+added*1000;
+    save();
+  }
   return added;
+}
+
+function formatTimerCorrection(seconds){
+  const totalMinutes=Math.max(0,Math.floor(seconds/60));
+  const hours=Math.floor(totalMinutes/60);
+  const minutes=totalMinutes%60;
+  return `${hours}時間${String(minutes).padStart(2,'0')}分`;
+}
+
+function ensureLongSessionDialog(){
+  let dialog=document.getElementById('longSessionDialog');
+  if(dialog)return dialog;
+
+  dialog=document.createElement('dialog');
+  dialog.id='longSessionDialog';
+  dialog.className='long-session-dialog';
+  dialog.innerHTML=`
+    <form method="dialog" class="long-session-card">
+      <p class="long-session-kicker">TIMER SAFETY</p>
+      <h2>タイマーを止め忘れていませんか？</h2>
+      <p id="longSessionNotice" class="long-session-notice"></p>
+      <div id="longSessionTime" class="long-session-time">0時間00分</div>
+
+      <div id="longSessionAdjustPanel" class="long-session-adjust" hidden>
+        <p>記録する時間を減らせます</p>
+        <div class="long-session-adjust-buttons">
+          <button type="button" data-reduce="5">−5分</button>
+          <button type="button" data-reduce="10">−10分</button>
+          <button type="button" data-reduce="30">−30分</button>
+          <button type="button" data-reduce="60">−1時間</button>
+        </div>
+      </div>
+
+      <div class="long-session-actions">
+        <button type="button" id="longSessionRecord" class="primary">この時間で記録</button>
+        <button type="button" id="longSessionAdjust">タイマーを修正</button>
+        <button type="button" id="longSessionDiscard">記録しない</button>
+      </div>
+    </form>`;
+
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+function openLongSessionDialog(detectedSeconds,autoStopped){
+  if(longSessionDialogOpen)return;
+  longSessionDialogOpen=true;
+
+  const dialog=ensureLongSessionDialog();
+  const timeEl=dialog.querySelector('#longSessionTime');
+  const noticeEl=dialog.querySelector('#longSessionNotice');
+  const adjustPanel=dialog.querySelector('#longSessionAdjustPanel');
+  let adjustedSeconds=Math.max(0,Math.floor(detectedSeconds));
+
+  noticeEl.textContent=autoStopped
+    ? '24時間以上動いていたため、安全のため自動停止しました。内容を確認してください。'
+    : '6時間以上の連続計測を検出したため、自動加算せず停止しました。';
+
+  const refresh=()=>{
+    timeEl.textContent=formatTimerCorrection(adjustedSeconds);
+    dialog.querySelector('#longSessionRecord').disabled=adjustedSeconds<60;
+  };
+  refresh();
+
+  adjustPanel.hidden=true;
+  dialog.querySelector('#longSessionAdjust').onclick=()=>{
+    adjustPanel.hidden=false;
+  };
+
+  adjustPanel.querySelectorAll('[data-reduce]').forEach(button=>{
+    button.onclick=()=>{
+      adjustedSeconds=Math.max(
+        0,
+        adjustedSeconds-Number(button.dataset.reduce)*60
+      );
+      refresh();
+    };
+  });
+
+  dialog.querySelector('#longSessionRecord').onclick=()=>{
+    const end=Date.now();
+    const start=end-adjustedSeconds*1000;
+    addElapsedSeconds(start,end);
+    state.sessionStartSeconds=state.totalSeconds;
+    save();
+    dialog.close();
+    longSessionDialogOpen=false;
+    renderAll();
+    if(Math.floor(state.pendingStudySeconds/60)>0)syncPendingMinutes();
+  };
+
+  dialog.querySelector('#longSessionDiscard').onclick=()=>{
+    dialog.close();
+    longSessionDialogOpen=false;
+    state.sessionStartSeconds=state.totalSeconds;
+    save();
+    renderAll();
+    toast('長時間の計測を記録せず終了しました');
+  };
+
+  dialog.addEventListener('cancel',event=>{
+    event.preventDefault();
+  },{once:true});
+
+  dialog.showModal();
 }
 function startTimerLoop(){
   clearInterval(interval);
@@ -299,3 +507,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.run
 window.addEventListener('pageshow',()=>{if(state.running){reconcileRunningTime();renderAll();startTimerLoop();}});
 window.addEventListener('beforeunload',()=>{if(state.running)reconcileRunningTime();});
 updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProfile,400);else{loadCloudState(false).finally(()=>{loadRanking();loadCalendar(false);syncPendingMinutes();});}
+
+
+/* Ver.2.2.0 Timer Correction β2 */
+let correctionRecords=[],correctionCurrentDate='',correctionCurrentSeconds=0,correctionSelectedSeconds=0;
+function correctionHaptic(n=6){try{if(navigator.vibrate)navigator.vibrate(n)}catch(e){}document.documentElement.classList.remove('correction-pulse');void document.documentElement.offsetWidth;document.documentElement.classList.add('correction-pulse')}
+function correctionFormat(s){s=Math.max(0,Math.floor(Number(s)||0));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;return `${String(h).padStart(2,'0')}時間${String(m).padStart(2,'0')}分${String(x).padStart(2,'0')}秒`}
+function updateCorrectionWheels(){const h=Math.floor(correctionSelectedSeconds/3600),m=Math.floor((correctionSelectedSeconds%3600)/60),s=correctionSelectedSeconds%60;wheelHours.textContent=String(h).padStart(2,'0');wheelMinutes.textContent=String(m).padStart(2,'0');wheelSeconds.textContent=String(s).padStart(2,'0');correctionAfterTime.textContent=correctionFormat(correctionSelectedSeconds);submitTimeCorrection.disabled=correctionSelectedSeconds>=correctionCurrentSeconds}
+function changeCorrectionWheel(unit,step){const mul={hours:3600,minutes:60,seconds:1}[unit]||0;const next=Math.max(0,Math.min(correctionCurrentSeconds,correctionSelectedSeconds+mul*Number(step)));if(next===correctionSelectedSeconds)return;correctionSelectedSeconds=next;correctionHaptic(5);updateCorrectionWheels()}
+async function loadCorrectionRecords(){const r=await fetch(`${API_URL}?action=correctionRecords&userId=${encodeURIComponent(profile.userId)}&_=${Date.now()}`,{cache:'no-store'});const d=await r.json();if(!d.success)throw new Error(d.message||'取得失敗');correctionRecords=d.records||[];return correctionRecords}
+function applyCorrectionRecord(date){const rec=correctionRecords.find(x=>x.studyDate===date);correctionCurrentDate=date;correctionCurrentSeconds=Number(rec?.seconds)||0;correctionSelectedSeconds=correctionCurrentSeconds;correctionCurrentTime.textContent=correctionFormat(correctionCurrentSeconds);updateCorrectionWheels()}
+async function openTimeCorrectionDialog(){if(!profile)return openProfile();correctionDateSelect.innerHTML='<option>読み込み中…</option>';timeCorrectionDialog.showModal();try{const rows=await loadCorrectionRecords();correctionDateSelect.innerHTML='';if(!rows.length){correctionDateSelect.innerHTML='<option value="">修正できる記録がありません</option>';return}rows.forEach(x=>{const o=document.createElement('option');o.value=x.studyDate;o.textContent=`${x.studyDate}　${correctionFormat(x.seconds)}`;correctionDateSelect.appendChild(o)});applyCorrectionRecord(rows[0].studyDate)}catch(e){toast(e.message,'error');timeCorrectionDialog.close()}}
+async function submitCorrection(){if(correctionSelectedSeconds>=correctionCurrentSeconds)return toast('現在より短い時間を指定してください','error');submitTimeCorrection.disabled=true;try{const result=await apiPost({action:'correctStudyTime',userId:profile.userId,studyDate:correctionCurrentDate,correctedSeconds:String(correctionSelectedSeconds),correctionId:`correction-${profile.userId}-${Date.now()}-${Math.random().toString(36).slice(2,9)}`});state.serverWeeklyMinutes=Number(result.weeklyMinutes)||0;state.serverTotalMinutes=Number(result.totalMinutes)||0;state.medalPoints=Number(result.medalPoints)||0;state.streakPoints=Number(result.streakPoints)||0;state.totalSeconds=state.serverTotalMinutes*60+(Number(state.pendingStudySeconds)||0);save();renderAll();correctionHaptic(35);toast(`✓ ${correctionFormat(correctionSelectedSeconds)}に修正しました`);timeCorrectionDialog.close();await loadRanking();await loadCalendar(false)}catch(e){toast(e.message||'修正失敗','error')}finally{submitTimeCorrection.disabled=false}}
+async function openCorrectionHistoryDialog(){if(!profile)return openProfile();correctionHistoryList.innerHTML='<div class="correction-history-empty">読み込み中…</div>';correctionHistoryDialog.showModal();try{const r=await fetch(`${API_URL}?action=correctionHistory&userId=${encodeURIComponent(profile.userId)}&_=${Date.now()}`,{cache:'no-store'});const d=await r.json();if(!d.success)throw new Error(d.message||'取得失敗');const h=d.history||[];correctionHistoryList.innerHTML=h.length?'':'<div class="correction-history-empty">まだ修正履歴はありません。</div>';h.forEach(x=>{const a=document.createElement('article');a.className='correction-history-item';a.innerHTML=`<strong>${escapeHtml(x.studyDate)}</strong><div>${correctionFormat(x.beforeSeconds)}</div><span>↓</span><div>${correctionFormat(x.afterSeconds)}</div><small>修正：−${correctionFormat(x.reducedSeconds)}<br>${escapeHtml(x.correctedAt||'')}</small>`;correctionHistoryList.appendChild(a)})}catch(e){correctionHistoryList.innerHTML=`<div class="correction-history-empty">${escapeHtml(e.message)}</div>`}}
+document.addEventListener('DOMContentLoaded',()=>{openTimeCorrection.onclick=openTimeCorrectionDialog;closeTimeCorrection.onclick=()=>timeCorrectionDialog.close();openCorrectionHistory.onclick=openCorrectionHistoryDialog;closeCorrectionHistory.onclick=()=>correctionHistoryDialog.close();correctionDateSelect.onchange=()=>applyCorrectionRecord(correctionDateSelect.value);submitTimeCorrection.onclick=submitCorrection;document.querySelectorAll('.wheel-arrow').forEach(b=>b.onclick=()=>changeCorrectionWheel(b.dataset.wheel,b.dataset.step))});

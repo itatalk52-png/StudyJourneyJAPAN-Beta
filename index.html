@@ -1,4 +1,6 @@
-<!doctype html>
+<!doctyp
+<button type="button" id="openTimeCorrection" class="timer-correction-button">時間の修正</button>
+e html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -111,6 +113,8 @@
           <div><span>累計獲得ポイント</span><strong id="timerTotalPoints">0 pt</strong></div>
         </div>
         <div class="timer-note">1分 = 1ポイント / 10分 = 1バッジ</div><div class="sync-state" id="pendingSync">同期済み</div>
+<button type="button" id="openCorrectionHistory" class="correction-history-button">修正履歴を確認する</button>
+
       </div>
       <div class="mission-launch-grid timer-mission-launch">
         <button class="mission-launch" data-mission="commercial"><span class="mission-caption">2級問題集ミッション</span><strong>COM. MISSION</strong><small>商業簿記</small></button>
@@ -302,7 +306,7 @@
   </form>
   <section class="manual-update-section" aria-labelledby="manualUpdateHeading">
     <div class="panel-kicker" id="manualUpdateHeading">APP VERSION</div>
-    <div class="current-version">Version <strong id="currentAppVersion">2.1.0</strong></div>
+    <div class="current-version">Version <strong id="currentAppVersion">2.2.0 Timer Correction β2</strong></div>
     <button class="primary-btn manual-update-button" id="manualUpdateButton" type="button">🚀 最新バージョンで旅をする</button>
     <p class="manual-update-help">最新バージョンがあるかもしれません。<br>こちらを押してみてください。</p>
     <div class="manual-update-result" id="manualUpdateResult" role="status" aria-live="polite"></div>
@@ -340,7 +344,7 @@
 <script src="mission.js"></script>
 <script>
 (() => {
-  const APP_VERSION = "2.1.0";
+  const APP_VERSION = "2.2.0 Timer Correction β2";
   document.getElementById("currentAppVersion").textContent = APP_VERSION;
 
   if (!("serviceWorker" in navigator)) {
@@ -490,5 +494,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   },1000);
 });
 </script>
+
+<dialog id="timeCorrectionDialog" class="time-correction-dialog"><div class="time-correction-card">
+<button type="button" id="closeTimeCorrection" class="time-correction-close">×</button><p class="time-correction-kicker">TIMER CORRECTION</p><h2>学習時間を修正</h2>
+<label for="correctionDateSelect">修正する学習日</label><select id="correctionDateSelect"></select>
+<div class="time-correction-current"><span>現在の記録</span><strong id="correctionCurrentTime">00時間00分00秒</strong></div>
+<div class="wheel-picker">
+<div class="wheel-column"><button type="button" class="wheel-arrow" data-wheel="hours" data-step="1">▲</button><div id="wheelHours" class="wheel-value">00</div><button type="button" class="wheel-arrow" data-wheel="hours" data-step="-1">▼</button><span>時間</span></div>
+<div class="wheel-column"><button type="button" class="wheel-arrow" data-wheel="minutes" data-step="1">▲</button><div id="wheelMinutes" class="wheel-value">00</div><button type="button" class="wheel-arrow" data-wheel="minutes" data-step="-1">▼</button><span>分</span></div>
+<div class="wheel-column"><button type="button" class="wheel-arrow" data-wheel="seconds" data-step="1">▲</button><div id="wheelSeconds" class="wheel-value">00</div><button type="button" class="wheel-arrow" data-wheel="seconds" data-step="-1">▼</button><span>秒</span></div>
+</div>
+<div class="time-correction-after"><span>修正後</span><strong id="correctionAfterTime">00時間00分00秒</strong></div><p class="time-correction-note">現在の記録より長い時間には変更できません。</p><button type="button" id="submitTimeCorrection" class="time-correction-submit">この時間に修正する</button>
+</div></dialog>
+<dialog id="correctionHistoryDialog" class="correction-history-dialog"><div class="correction-history-card"><button type="button" id="closeCorrectionHistory" class="time-correction-close">×</button><p class="time-correction-kicker">CORRECTION HISTORY</p><h2>修正履歴</h2><div id="correctionHistoryList"></div></div></dialog>
 </body>
 </html>
