@@ -1,6 +1,4 @@
-<!doctyp
-<button type="button" id="openTimeCorrection" class="timer-correction-button">時間の修正</button>
-e html>
+<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -107,6 +105,7 @@ e html>
         <div class="timer-display" id="timerDisplay">00:00:00</div>
         <div class="timer-controls timer-controls-single">
           <button class="primary-btn wide" id="timerStart">START</button>
+<button type="button" id="openTimeCorrection" class="timer-correction-button">時間の修正</button>
         </div>
         <div class="timer-points-grid">
           <div><span>本日の勉強時間ポイント</span><strong id="sessionPoints">0 pt</strong></div>
@@ -306,7 +305,7 @@ e html>
   </form>
   <section class="manual-update-section" aria-labelledby="manualUpdateHeading">
     <div class="panel-kicker" id="manualUpdateHeading">APP VERSION</div>
-    <div class="current-version">Version <strong id="currentAppVersion">2.2.0 Timer Correction β2 TEST</strong></div>
+    <div class="current-version">Version <strong id="currentAppVersion">2.2.0 Timer Correction β3 TEST</strong></div>
     <button class="primary-btn manual-update-button" id="manualUpdateButton" type="button">🚀 最新バージョンで旅をする</button>
     <p class="manual-update-help">最新バージョンがあるかもしれません。<br>こちらを押してみてください。</p>
     <div class="manual-update-result" id="manualUpdateResult" role="status" aria-live="polite"></div>
@@ -344,7 +343,7 @@ e html>
 <script src="mission.js"></script>
 <script>
 (() => {
-  const APP_VERSION = "2.2.0 Timer Correction β2 TEST";
+  const APP_VERSION = "2.2.0 Timer Correction β3 TEST";
   document.getElementById("currentAppVersion").textContent = APP_VERSION;
 
   if (!("serviceWorker" in navigator)) {
@@ -497,7 +496,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 <dialog id="timeCorrectionDialog" class="time-correction-dialog"><div class="time-correction-card">
 <button type="button" id="closeTimeCorrection" class="time-correction-close">×</button><p class="time-correction-kicker">TIMER CORRECTION</p><h2>学習時間を修正</h2>
-<label for="correctionDateSelect">修正する学習日</label><select id="correctionDateSelect"></select>
+<label for="correctionDateSelect">修正する学習日</label><select id="correctionDateSelect" class="time-correction-date"></select>
 <div class="time-correction-current"><span>現在の記録</span><strong id="correctionCurrentTime">00時間00分00秒</strong></div>
 <div class="wheel-picker">
 <div class="wheel-column"><button type="button" class="wheel-arrow" data-wheel="hours" data-step="1">▲</button><div id="wheelHours" class="wheel-value">00</div><button type="button" class="wheel-arrow" data-wheel="hours" data-step="-1">▼</button><span>時間</span></div>
