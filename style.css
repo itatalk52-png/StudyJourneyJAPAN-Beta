@@ -1638,3 +1638,37 @@ dialog::backdrop{background:rgba(20,29,25,.58);backdrop-filter:blur(6px)}dialog 
 .wheel-value{display:grid;place-items:center;min-height:56px;font-size:31px;font-weight:900;font-variant-numeric:tabular-nums}
 .correction-pulse .wheel-value{transform:scale(1.06);box-shadow:0 0 0 3px rgba(230,199,108,.22)}
 .time-correction-submit{width:100%;min-height:46px;border:1px solid #c9aa51;border-radius:999px;background:linear-gradient(145deg,#fff1bd,#e6c76c);color:#30463e;font-weight:900}
+
+/* Ver.2.2.0 Timer Correction β4 TEST — swipe wheel */
+.swipe-wheel-picker{
+  position:relative;display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin:18px 0;height:196px;overflow:hidden
+}
+.swipe-wheel-group{display:grid;grid-template-rows:168px 20px;align-items:center;min-width:0}
+.swipe-wheel-group>span{font-size:11px;font-weight:800;color:#69746f}
+.swipe-wheel{
+  height:168px;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  touch-action:pan-y;cursor:grab;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 25%,#000 75%,transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0%,#000 25%,#000 75%,transparent 100%)
+}
+.swipe-wheel::-webkit-scrollbar{display:none}
+.swipe-wheel.is-touching{cursor:grabbing}
+.swipe-wheel-spacer{height:60px}
+.swipe-wheel-item{
+  height:48px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;
+  color:#9aa29f;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;
+  transform:scale(.84);opacity:.58;transition:.12s ease;user-select:none;-webkit-user-select:none
+}
+.swipe-wheel-item.selected{
+  color:#29463c;font-size:30px;font-weight:900;transform:scale(1);opacity:1
+}
+.swipe-wheel-highlight{
+  position:absolute;left:0;right:0;top:60px;height:48px;
+  border-top:1px solid rgba(179,145,55,.34);border-bottom:1px solid rgba(179,145,55,.34);
+  border-radius:12px;background:linear-gradient(90deg,transparent,rgba(230,199,108,.16),transparent);
+  pointer-events:none;z-index:4
+}
+.correction-pulse .swipe-wheel-highlight{box-shadow:0 0 0 3px rgba(230,199,108,.20)}
+.wheel-arrow{display:none!important}

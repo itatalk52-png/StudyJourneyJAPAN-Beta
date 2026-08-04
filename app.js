@@ -513,16 +513,124 @@ updateProfileUI();renderAll();showScreen('home');if(!profile)setTimeout(openProf
 let correctionRecords=[],correctionCurrentDate='',correctionCurrentSeconds=0,correctionSelectedSeconds=0;
 function correctionHaptic(n=6){try{if(navigator.vibrate)navigator.vibrate(n)}catch(e){}document.documentElement.classList.remove('correction-pulse');void document.documentElement.offsetWidth;document.documentElement.classList.add('correction-pulse')}
 function correctionFormat(s){s=Math.max(0,Math.floor(Number(s)||0));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60;return `${String(h).padStart(2,'0')}時間${String(m).padStart(2,'0')}分${String(x).padStart(2,'0')}秒`}
-function updateCorrectionWheels(){const h=Math.floor(correctionSelectedSeconds/3600),m=Math.floor((correctionSelectedSeconds%3600)/60),s=correctionSelectedSeconds%60;wheelHours.textContent=String(h).padStart(2,'0');wheelMinutes.textContent=String(m).padStart(2,'0');wheelSeconds.textContent=String(s).padStart(2,'0');correctionAfterTime.textContent=correctionFormat(correctionSelectedSeconds);document.getElementById('submitTimeCorrection').disabled=correctionSelectedSeconds>=correctionCurrentSeconds}
-function changeCorrectionWheel(unit,step){const mul={hours:3600,minutes:60,seconds:1}[unit]||0;const next=Math.max(0,Math.min(correctionCurrentSeconds,correctionSelectedSeconds+mul*Number(step)));if(next===correctionSelectedSeconds)return;correctionSelectedSeconds=next;correctionHaptic(5);updateCorrectionWheels()}
 async function loadCorrectionRecords(){const r=await fetch(`${API_URL}?action=correctionRecords&userId=${encodeURIComponent(profile.userId)}&_=${Date.now()}`,{cache:'no-store'});const d=await r.json();if(!d.success)throw new Error(d.message||'取得失敗');correctionRecords=d.records||[];return correctionRecords}
-function applyCorrectionRecord(date){const rec=correctionRecords.find(x=>x.studyDate===date);correctionCurrentDate=date;correctionCurrentSeconds=Number(rec?.seconds)||0;correctionSelectedSeconds=correctionCurrentSeconds;document.getElementById('correctionCurrentTime').textContent=correctionFormat(correctionCurrentSeconds);updateCorrectionWheels()}
+function applyCorrectionRecord(date){
+  const rec=correctionRecords.find(x=>x.studyDate===date);
+  correctionCurrentDate=date;
+  correctionCurrentSeconds=Number(rec?.seconds)||0;
+  correctionSelectedSeconds=correctionCurrentSeconds;
+  document.getElementById('correctionCurrentTime').textContent=correctionFormat(correctionCurrentSeconds);
+  syncSwipeWheelsFromSeconds(correctionSelectedSeconds,true);
+}
 async function openTimeCorrectionDialog(){if(!profile)return openProfile();document.getElementById('correctionDateSelect').innerHTML='<option>読み込み中…</option>';document.getElementById('timeCorrectionDialog').showModal();try{const rows=await loadCorrectionRecords();document.getElementById('correctionDateSelect').innerHTML='';if(!rows.length){document.getElementById('correctionDateSelect').innerHTML='<option value="">修正できる記録がありません</option>';return}rows.forEach(x=>{const o=document.createElement('option');o.value=x.studyDate;o.textContent=`${x.studyDate}　${correctionFormat(x.seconds)}`;document.getElementById('correctionDateSelect').appendChild(o)});applyCorrectionRecord(rows[0].studyDate)}catch(e){toast(e.message,'error');document.getElementById('timeCorrectionDialog').close()}}
 async function submitCorrection(){if(correctionSelectedSeconds>=correctionCurrentSeconds)return toast('現在より短い時間を指定してください','error');document.getElementById('submitTimeCorrection').disabled=true;try{const result=await apiPost({action:'correctStudyTime',userId:profile.userId,studyDate:correctionCurrentDate,correctedSeconds:String(correctionSelectedSeconds),correctionId:`correction-${profile.userId}-${Date.now()}-${Math.random().toString(36).slice(2,9)}`});state.serverWeeklyMinutes=Number(result.weeklyMinutes)||0;state.serverTotalMinutes=Number(result.totalMinutes)||0;state.medalPoints=Number(result.medalPoints)||0;state.streakPoints=Number(result.streakPoints)||0;state.totalSeconds=state.serverTotalMinutes*60+(Number(state.pendingStudySeconds)||0);save();renderAll();correctionHaptic(35);toast(`✓ ${correctionFormat(correctionSelectedSeconds)}に修正しました`);document.getElementById('timeCorrectionDialog').close();await loadRanking();await loadCalendar(false)}catch(e){toast(e.message||'修正失敗','error')}finally{document.getElementById('submitTimeCorrection').disabled=false}}
 async function openCorrectionHistoryDialog(){if(!profile)return openProfile();document.getElementById('correctionHistoryList').innerHTML='<div class="correction-history-empty">読み込み中…</div>';document.getElementById('correctionHistoryDialog').showModal();try{const r=await fetch(`${API_URL}?action=correctionHistory&userId=${encodeURIComponent(profile.userId)}&_=${Date.now()}`,{cache:'no-store'});const d=await r.json();if(!d.success)throw new Error(d.message||'取得失敗');const h=d.history||[];document.getElementById('correctionHistoryList').innerHTML=h.length?'':'<div class="correction-history-empty">まだ修正履歴はありません。</div>';h.forEach(x=>{const a=document.createElement('article');a.className='correction-history-item';a.innerHTML=`<strong>${escapeHtml(x.studyDate)}</strong><div>${correctionFormat(x.beforeSeconds)}</div><span>↓</span><div>${correctionFormat(x.afterSeconds)}</div><small>修正：−${correctionFormat(x.reducedSeconds)}<br>${escapeHtml(x.correctedAt||'')}</small>`;document.getElementById('correctionHistoryList').appendChild(a)})}catch(e){document.getElementById('correctionHistoryList').innerHTML=`<div class="correction-history-empty">${escapeHtml(e.message)}</div>`}}
 
 
+
+/* Ver.2.2.0 Timer Correction β4 TEST — swipe wheels */
+const SWIPE_WHEEL_ITEM_HEIGHT=48;
+let swipeWheelProgrammatic=false;
+const swipeWheelTimers={};
+
+function buildSwipeWheel(element,max){
+  if(!element)return;
+  element.innerHTML='<div class="swipe-wheel-spacer"></div>';
+  for(let value=0;value<=max;value++){
+    const item=document.createElement('div');
+    item.className='swipe-wheel-item';
+    item.dataset.value=String(value);
+    item.textContent=String(value).padStart(2,'0');
+    element.appendChild(item);
+  }
+  const bottom=document.createElement('div');
+  bottom.className='swipe-wheel-spacer';
+  element.appendChild(bottom);
+
+  element.addEventListener('scroll',()=>{
+    if(swipeWheelProgrammatic)return;
+    const unit=element.dataset.unit;
+    clearTimeout(swipeWheelTimers[unit]);
+    swipeWheelTimers[unit]=setTimeout(()=>settleSwipeWheel(element,true),80);
+  },{passive:true});
+
+  element.addEventListener('pointerdown',()=>element.classList.add('is-touching'));
+  element.addEventListener('pointerup',()=>{
+    element.classList.remove('is-touching');
+    settleSwipeWheel(element,true);
+  });
+  element.addEventListener('pointercancel',()=>element.classList.remove('is-touching'));
+}
+
+function getSwipeWheelValue(element){
+  if(!element)return 0;
+  return Math.max(0,Math.round(element.scrollTop/SWIPE_WHEEL_ITEM_HEIGHT));
+}
+
+function setSwipeWheelValue(element,value,instant=false){
+  if(!element)return;
+  swipeWheelProgrammatic=true;
+  element.scrollTo({
+    top:Math.max(0,Number(value)||0)*SWIPE_WHEEL_ITEM_HEIGHT,
+    behavior:instant?'auto':'smooth'
+  });
+  setTimeout(()=>{swipeWheelProgrammatic=false;},instant?0:180);
+}
+
+function refreshSwipeWheelSelection(){
+  document.querySelectorAll('.swipe-wheel').forEach(wheel=>{
+    const selected=getSwipeWheelValue(wheel);
+    wheel.querySelectorAll('.swipe-wheel-item').forEach(item=>{
+      item.classList.toggle('selected',Number(item.dataset.value)===selected);
+    });
+  });
+}
+
+function readSwipeWheelSeconds(){
+  const h=getSwipeWheelValue(document.getElementById('hoursWheel'));
+  const m=getSwipeWheelValue(document.getElementById('minutesWheel'));
+  const s=getSwipeWheelValue(document.getElementById('secondsWheel'));
+  return h*3600+m*60+s;
+}
+
+function settleSwipeWheel(element,feedback=false){
+  const value=getSwipeWheelValue(element);
+  setSwipeWheelValue(element,value,false);
+
+  const next=readSwipeWheelSeconds();
+  if(next>correctionCurrentSeconds){
+    syncSwipeWheelsFromSeconds(correctionCurrentSeconds,false);
+    if(feedback)toast('現在の記録より長い時間には変更できません','error');
+    return;
+  }
+
+  correctionSelectedSeconds=next;
+  refreshSwipeWheelSelection();
+  document.getElementById('correctionAfterTime').textContent=correctionFormat(next);
+  document.getElementById('submitTimeCorrection').disabled=next>=correctionCurrentSeconds;
+  if(feedback)correctionHaptic(5);
+}
+
+function syncSwipeWheelsFromSeconds(seconds,instant=false){
+  const safe=Math.max(0,Math.floor(Number(seconds)||0));
+  setSwipeWheelValue(document.getElementById('hoursWheel'),Math.floor(safe/3600),instant);
+  setSwipeWheelValue(document.getElementById('minutesWheel'),Math.floor((safe%3600)/60),instant);
+  setSwipeWheelValue(document.getElementById('secondsWheel'),safe%60,instant);
+  correctionSelectedSeconds=safe;
+  document.getElementById('correctionAfterTime').textContent=correctionFormat(safe);
+  document.getElementById('submitTimeCorrection').disabled=safe>=correctionCurrentSeconds;
+  setTimeout(refreshSwipeWheelSelection,instant?0:200);
+}
+
+function initializeSwipeWheels(){
+  buildSwipeWheel(document.getElementById('hoursWheel'),99);
+  buildSwipeWheel(document.getElementById('minutesWheel'),59);
+  buildSwipeWheel(document.getElementById('secondsWheel'),59);
+  refreshSwipeWheelSelection();
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
+  initializeSwipeWheels();
  const openBtn=document.getElementById('openTimeCorrection');
  const closeBtn=document.getElementById('closeTimeCorrection');
  const histBtn=document.getElementById('openCorrectionHistory');
@@ -535,5 +643,5 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(histClose)histClose.onclick=()=>document.getElementById('correctionHistoryDialog').close();
  if(select)select.onchange=()=>applyCorrectionRecord(select.value);
  if(submit)submit.onclick=submitCorrection;
- document.querySelectorAll('.wheel-arrow').forEach(b=>b.onclick=()=>changeCorrectionWheel(b.dataset.wheel,b.dataset.step));
+ 
 });
